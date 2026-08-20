@@ -17,7 +17,7 @@ Dettagli architetturali completi in [AGENTS.md](./AGENTS.md) e in [docs/](./docs
 ```
 gym-bros/
   frontend/   Vue 3 + Vite + TypeScript (PWA)
-  backend/    Laravel 13 (API REST)
+  backend/    Laravel 13 (API REST) — hostato su Railway, Root Directory = backend
   docs/       Documentazione tecnica
   README.md
   AGENTS.md
@@ -62,6 +62,10 @@ L'app sarà disponibile su `http://localhost:5173`.
 - Frontend: copiare `frontend/.env.example` in `frontend/.env` e impostare `VITE_API_URL`.
 
 Non committare mai i file `.env`.
+
+## Deploy
+
+Il backend è pensato per essere ospitato su Railway (piano free). Vedi [docs/deployment.md](./docs/deployment.md) per i passaggi necessari (Root Directory del servizio, plugin MySQL, variabili d'ambiente).
 
 ## Problemi aperti (Fase 1)
 
