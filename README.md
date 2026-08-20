@@ -25,12 +25,12 @@ gym-bros/
 
 ## Requisiti locali
 
-- PHP **8.3+** (Laravel 13 richiede PHP ^8.3; vedi nota sotto)
+- PHP **8.4+** (Laravel 13 richiede PHP ^8.3, ma il `composer.lock` committato ha bloccato pacchetti Symfony che richiedono PHP ≥8.4.1 — vedi nota sotto; l'immagine Docker di produzione usa `php:8.4-cli-bookworm`)
 - Composer 2.x
 - Node.js 20+ e npm
 - MySQL o MariaDB
 
-> ⚠️ **Nota ambiente di sviluppo attuale**: la macchina su cui è stato inizializzato il progetto ha PHP 8.2, che non è compatibile con Laravel 13 (errore di parsing su sintassi PHP 8.3). I comandi `php artisan ...` non funzioneranno finché PHP non viene aggiornato a 8.3+. Il backend è comunque stato scaffoldato correttamente (`composer install` completato). Vedi la sezione "Problemi aperti" più sotto.
+> ⚠️ **Nota ambiente di sviluppo attuale**: la macchina su cui è stato inizializzato il progetto ha PHP 8.2, incompatibile con Laravel 13. I comandi `php artisan ...` non funzioneranno finché PHP non viene aggiornato ad **almeno 8.4.1** (non basta 8.3, per via del `composer.lock` — vedi "Problemi aperti"). Il backend è comunque stato scaffoldato correttamente (`composer install` completato). Vedi la sezione "Problemi aperti" più sotto.
 
 ## Avvio locale
 
@@ -40,7 +40,7 @@ gym-bros/
 cd backend
 composer install
 cp .env.example .env      # già fatto in questo repo, .env non è committato
-php artisan key:generate  # richiede PHP 8.3+
+php artisan key:generate  # richiede PHP 8.4.1+ (vedi Requisiti locali)
 php artisan serve
 ```
 
@@ -69,7 +69,7 @@ Il backend è pensato per essere ospitato su Railway (piano free). Vedi [docs/de
 
 ## Problemi aperti (Fase 1)
 
-1. **PHP locale 8.2 vs Laravel 13 (richiede PHP 8.3+)**: `php artisan` non è eseguibile su questa macchina. Necessario aggiornare PHP prima di procedere con la Fase 2 (migrations, seeders, Sanctum).
+1. **PHP locale 8.2 vs `composer.lock` (richiede PHP ≥8.4.1)**: `php artisan` non è eseguibile su questa macchina. Il `composer.lock` è stato generato con `--ignore-platform-reqs` (necessario perché la macchina aveva PHP 8.2) e ha bloccato versioni Symfony che richiedono PHP 8.4.1+, un vincolo più stretto di quanto dichiarato in `composer.json` (`^8.3`). Necessario aggiornare PHP ad almeno 8.4.1 prima di procedere con la Fase 2 (migrations, seeders, Sanctum) — coerente con l'immagine Docker di produzione (`php:8.4-cli-bookworm`).
 2. **Nessun server MySQL/MariaDB locale rilevato**: da installare/configurare prima di eseguire le migration.
 3. Sanctum non è ancora installato (verrà aggiunto in Fase 2, insieme all'autenticazione).
 

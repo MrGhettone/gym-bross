@@ -2,7 +2,7 @@
 
 ## Requisiti
 
-- PHP **8.3+** (Laravel 13 richiede PHP ^8.3 — vincolo reale di sintassi del framework, non solo dichiarato in `composer.json`)
+- PHP **8.4.1+** (Laravel 13 richiede PHP ^8.3 in `composer.json`, ma il `composer.lock` committato ha bloccato pacchetti Symfony che richiedono PHP ≥8.4.1 — vedi nota sotto. L'immagine Docker di produzione usa `php:8.4-cli-bookworm`, quindi conviene allinearsi anche in locale)
 - Composer 2.x
 - Node.js 20+ / npm
 - MySQL o MariaDB
@@ -48,8 +48,10 @@ npm run dev        # dev server
 
 Sulla macchina di sviluppo usata per l'inizializzazione del progetto:
 
-- PHP installato: 8.2.30 → **incompatibile** con Laravel 13. `php artisan` termina con errore di parsing su sintassi PHP 8.3. Necessario aggiornare PHP a 8.3+ prima di poter eseguire qualsiasi comando artisan (migrate, serve, test, key:generate, ecc.).
+- PHP installato: 8.2.30 → **incompatibile** con Laravel 13. `php artisan` termina con errore di parsing su sintassi PHP 8.3.
+- Il backend è stato scaffoldato con `composer create-project ... --ignore-platform-reqs` (necessario per bypassare il controllo PHP 8.2 in fase di scaffold). Questo ha però fatto sì che Composer, senza vincoli di piattaforma da rispettare, bloccasse nel `composer.lock` versioni di Symfony (8.1.x) che richiedono **PHP ≥8.4.1** — un requisito più stretto di quanto dichiarato in `composer.json` (`^8.3`). Il deploy su Railway ha fallito la prima volta proprio per questo (immagine Docker su PHP 8.3), risolto allineando l'immagine a `php:8.4-cli-bookworm`.
+- Di conseguenza, per eseguire `composer install` (non solo `composer update`) su questo lock file serve **PHP 8.4.1+** anche in locale, non semplicemente 8.3+.
 - Nessun server MySQL/MariaDB rilevato in locale.
 - Il frontend (Vue/Vite) funziona correttamente con Node 24 / npm 11: `npm run build` e `npm run dev` verificati con successo.
 
-Il backend è stato comunque scaffoldato con successo (`composer install` completato tramite `--ignore-platform-reqs`); manca solo un runtime PHP 8.3+ per eseguirlo.
+Se in futuro si vuole tornare a supportare PHP 8.3 puro in locale, occorre rigenerare il lock file con `composer update` da una macchina/container con PHP 8.3 (non 8.2), così Composer risolve versioni Symfony compatibili con 8.3 invece delle 8.1.x attuali.

@@ -10,7 +10,7 @@ Per eliminare questa ambiguità, il backend usa un **Dockerfile esplicito**: Rai
 
 ## File di configurazione nel repo
 
-- `backend/Dockerfile` — immagine PHP 8.3 CLI, installa le estensioni necessarie (pdo_mysql, mbstring, xml, zip), esegue `composer install`, poi avvia `bash start.sh`.
+- `backend/Dockerfile` — immagine PHP 8.4 CLI (il `composer.lock` committato ha bloccato pacchetti Symfony che richiedono PHP ≥8.4.1, vedi troubleshooting sotto), installa le estensioni necessarie (pdo_mysql, mbstring, xml, zip), esegue `composer install`, poi avvia `bash start.sh`.
 - `backend/.dockerignore` — esclude `.git`, `vendor/`, `.env`, log/cache locali dal contesto di build.
 - `backend/start.sh` — script di avvio del container: esegue le migration (`php artisan migrate --force`) e poi avvia il server PHP integrato (`php artisan serve`) sull'host/porta forniti da Railway. Adeguato per il piano free (nessun bisogno di Nginx/PHP-FPM separati).
 - `backend/railway.json` — config-as-code per Railway: `builder: DOCKERFILE`, `dockerfilePath: Dockerfile`, healthcheck su `/up` (route di health-check nativa di Laravel, già registrata in `bootstrap/app.php`).
@@ -91,6 +91,14 @@ Fix: passare al builder **Dockerfile** (vedi sezione sopra), che bypassa del tut
 ### Il servizio era da Template e non risponde ai cambi di Root Directory/Builder
 
 Se cambiare Root Directory e Builder sullo stesso servizio non ha effetto sui log di build, creare un **servizio nuovo** con **"+ New" → "GitHub Repo"** (non da Template) selezionando `MrGhettone/gym-bross` direttamente, ripetere la configurazione (Root Directory, Builder Dockerfile, variabili d'ambiente — si può riusare lo stesso plugin MySQL del progetto), fare il deploy sul nuovo servizio ed eliminare quello vecchio una volta verificato che funziona.
+
+### `composer install` fallisce con "requires php >=8.4.1"
+
+Sintomo: il build Docker arriva a eseguire `composer install`, ma fallisce con una lista di "Problem N" su pacchetti `symfony/*` che richiedono `php >=8.4.1`, mentre `composer.json` dichiara solo `php: ^8.3`.
+
+Causa: il `composer.lock` è stato generato in locale con `--ignore-platform-reqs` (necessario perché la macchina di sviluppo aveva PHP 8.2). Senza controlli di piattaforma, Composer ha bloccato versioni Symfony (8.1.x) più recenti di quelle compatibili con PHP 8.3, che richiedono 8.4.1+. Il `Dockerfile` usa quindi `php:8.4-cli-bookworm` per soddisfare questo vincolo effettivo, non `php:8.3`.
+
+Se in futuro serve tornare a PHP 8.3 (in produzione o in locale), rigenerare `composer.lock` con `composer update` da un ambiente con PHP 8.3 reale (non 8.2, non `--ignore-platform-reqs`), così Composer risolve versioni Symfony compatibili con 8.3.
 
 ## Limiti noti del piano free
 
