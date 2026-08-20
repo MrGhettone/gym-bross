@@ -67,6 +67,17 @@ Copiare il valore restituito (es. `base64:...`) nella variabile `APP_KEY` su Rai
 
 `FRONTEND_URL` (già usata in `backend/config/cors.php`) deve puntare al dominio di produzione reale del frontend, non a `localhost`, altrimenti le richieste dal frontend deployato verranno bloccate dal CORS.
 
+## Troubleshooting: "Railpack could not determine how to build the app" nonostante Root Directory impostato
+
+Se il servizio è stato creato tramite **deploy da Template Railway** (riconoscibile in Settings → Source dalla presenza di "Upstream Repo" con i pulsanti "Eject" / "Check for updates"), impostare Root Directory manualmente potrebbe non bastare: il servizio resta agganciato alla configurazione di build del template, che nei log di Railpack risulta ancora scansionare la root del repo invece di `backend/`.
+
+Fix verificato:
+
+1. Creare un **nuovo servizio** nello stesso progetto Railway con **"+ New" → "GitHub Repo"** (non da Template), selezionando `MrGhettone/gym-bross` direttamente.
+2. Sul nuovo servizio: Settings → Source → Root Directory → `backend`.
+3. Ricollegare/ricreare le variabili d'ambiente (si può riusare lo stesso plugin MySQL già presente nel progetto, referenziandolo dal nuovo servizio).
+4. Deploy del nuovo servizio, poi eliminare il vecchio servizio da Template.
+
 ## Limiti noti del piano free
 
 - Filesystem effimero: non fare affidamento su file scritti su disco tra un deploy e l'altro (per questo si usa `SESSION_DRIVER=database` invece di `file`, e `CACHE_STORE=database` invece di `file`).
