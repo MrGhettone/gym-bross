@@ -1,4 +1,5 @@
 const API_URL = import.meta.env.VITE_API_URL as string
+const API_ORIGIN = new URL(API_URL).origin
 
 export interface ApiResponse<T> {
   data: T
@@ -20,15 +21,42 @@ export class ApiError extends Error {
   }
 }
 
+const MUTATING_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE'])
+
+function readCookie(name: string): string | null {
+  const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`))
+  return match ? decodeURIComponent(match[1]) : null
+}
+
+/**
+ * Va chiamata prima di register/login: fa emettere al backend il cookie
+ * XSRF-TOKEN (Sanctum SPA), letto poi da `request()` per l'header
+ * X-XSRF-TOKEN richiesto dalle richieste che modificano stato.
+ */
+export async function ensureCsrfCookie(): Promise<void> {
+  await fetch(`${API_ORIGIN}/sanctum/csrf-cookie`, { credentials: 'include' })
+}
+
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const method = (options.method ?? 'GET').toUpperCase()
+  const headers: Record<string, string> = {
+    Accept: 'application/json',
+    'Content-Type': 'application/json',
+    ...(options.headers as Record<string, string> | undefined),
+  }
+
+  if (MUTATING_METHODS.has(method)) {
+    const xsrfToken = readCookie('XSRF-TOKEN')
+    if (xsrfToken) {
+      headers['X-XSRF-TOKEN'] = xsrfToken
+    }
+  }
+
   const response = await fetch(`${API_URL}${path}`, {
-    credentials: 'include',
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
     ...options,
+    method,
+    credentials: 'include',
+    headers,
   })
 
   if (!response.ok) {
