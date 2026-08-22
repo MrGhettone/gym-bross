@@ -29,8 +29,8 @@ Gym Bros è composto da due progetti indipendenti che comunicano solo via API RE
 - CORS: origini esplicite da env (`FRONTEND_URL`), `supports_credentials=true` per supportare cookie di sessione.
 - Formato risposta coerente: `{ "data": ... }` per successo, `{ "message": "..." }` per errore (con `errors` per la validazione 422).
 
-## Stato attuale (Fase 1)
+## Stato attuale (Fase 2)
 
-- Scaffolding backend/frontend completato.
-- Unico endpoint presente: `GET /api/v1/ping`, usato solo per verificare la connettività tra i due progetti.
-- Nessuna autenticazione, amicizia, workout, feed o notifica implementata.
+- Scaffolding backend/frontend completato (Fase 1).
+- Autenticazione Sanctum cookie-based implementata: register/login/logout/me, form Vue mobile-first, route guard lato frontend. Dettagli in [docs/authentication.md](authentication.md).
+- Amicizie, workout, feed, notifiche non ancora implementati.

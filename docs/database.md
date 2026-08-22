@@ -4,13 +4,13 @@
 
 MySQL / MariaDB, gestito interamente tramite Laravel migrations. Nessuna modifica manuale allo schema: ogni cambiamento passa da una migration.
 
-## Stato attuale (Fase 1)
+## Stato attuale (Fase 2)
 
-Nessuna migration applicativa ancora creata (solo quelle di default dello scaffold Laravel: users, cache, jobs). Le tabelle sotto sono lo schema concettuale pianificato per le fasi successive.
+`users` implementata (migration di scaffold + `add_username_and_avatar_to_users_table` in Fase 2, che rimuove `name` e aggiunge `username`/`avatar`). Le altre tabelle sotto restano lo schema concettuale pianificato per le fasi successive.
 
 ## Schema pianificato
 
-### `users`
+### `users` ✅
 
 | campo | tipo | note |
 |---|---|---|

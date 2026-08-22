@@ -8,15 +8,15 @@ PWA mobile-first per condividere allenamenti tra amici: account, amicizie, worko
 
 ## Stack
 
-- **Frontend**: Vue 3, Vite, TypeScript, Vue Router, Pinia, `vite-plugin-pwa` (da Fase 6), Web Push API. Nessun framework CSS/UI aggiuntivo installato per ora.
-- **Backend**: Laravel 12, PHP ^8.2, Eloquent, Laravel Sanctum (da Fase 2), MySQL/MariaDB.
+- **Frontend**: Vue 3, Vite, TypeScript, Vue Router, Pinia, SCSS (mobile-first, vedi `src/styles/`), `vite-plugin-pwa` (da Fase 6), Web Push API. Nessun framework CSS/UI aggiuntivo installato per ora.
+- **Backend**: Laravel 12, PHP ^8.2, Eloquent, Laravel Sanctum (SPA cookie-based, Fase 2), MySQL/MariaDB.
 - Nessun altro framework PHP o JS di stato globale. Nessun Redis/WebSocket/microservizi salvo necessità reale futura.
 
 ## Architettura
 
 - `frontend/` e `backend/` sono progetti completamente separati, comunicano solo via API REST JSON su `/api/v1/*`.
 - Il frontend non è mai considerato trusted: ogni regola di autorizzazione, validazione e privacy vive nel backend.
-- Autenticazione pianificata: Laravel Sanctum in modalità **SPA cookie-based** (non token Bearer), perché frontend e backend sono pensati per girare sotto la stessa origine "logica" in produzione. Decisione da confermare/implementare in Fase 2.
+- Autenticazione: Laravel Sanctum in modalità **SPA cookie-based** (non token Bearer), perché frontend e backend sono pensati per girare sotto la stessa origine "logica" in produzione. Implementata in Fase 2, vedi [docs/authentication.md](./docs/authentication.md).
 - CORS: origini consentite esplicite via `FRONTEND_URL` (env), `supports_credentials=true` in `backend/config/cors.php` — necessario per cookie di sessione Sanctum. Mai wildcard `*` insieme a `supports_credentials`.
 
 ## Struttura repository
@@ -67,10 +67,11 @@ Ogni modifica schema passa da una migration Laravel. Mai modificare il DB a mano
 - Risposte coerenti: successo `{ "data": ... }`, errore `{ "message": "..." }` (+ `errors` per 422 in stile Laravel standard).
 - Endpoint attuale: `GET /api/v1/ping` — solo verifica di connettività frontend↔backend (Fase 1), da rimuovere o mantenere come health-check quando arriveranno le API reali.
 
-## Autenticazione (pianificata, Fase 2)
+## Autenticazione (Fase 2 — implementata)
 
-- Laravel Sanctum, cookie-based SPA auth. Endpoint previsti: register, login, logout, `/me`.
-- Password hashing nativo Laravel, rate limiting sul login, validazione email.
+- Laravel Sanctum, cookie-based SPA auth. Endpoint: `POST /api/v1/auth/register`, `POST /api/v1/auth/login`, `POST /api/v1/auth/logout`, `GET /api/v1/auth/me`.
+- Password hashing nativo Laravel, rate limiting sul login (`throttle:6,1`), validazione email/username univoci.
+- Dettagli completi in [docs/authentication.md](./docs/authentication.md).
 
 ## Notifiche (pianificate, Fase 7)
 
@@ -125,3 +126,5 @@ npm run build
 - **2026-08-20 — Immagine Docker PHP 8.4, non 8.3**: `composer install` nel build Docker falliva su pacchetti Symfony che richiedono `php >=8.4.1` (bloccati nel `composer.lock` a causa del `--ignore-platform-reqs` iniziale, vedi sopra). `backend/Dockerfile` usa quindi `php:8.4-cli-bookworm`. Requisito locale aggiornato di conseguenza a PHP **8.4.1+** (non più solo 8.3+) per restare coerenti col lock file committato. **Superato dalla decisione del 2026-08-22 sotto.**
 - **2026-08-22 — Downgrade a Laravel 12 per allinearsi a PHP 8.2 locale**: la macchina di sviluppo ha PHP 8.2.12 reale (non aggiornabile nell'immediato), quindi invece di inseguire PHP 8.4.1+ si è tornati a **Laravel 12** (richiede solo PHP ^8.2), eliminando il vincolo a cascata su Symfony 8.1.x introdotto da Laravel 13. `backend/composer.json` aggiornato (`php: ^8.3` → `^8.2`, `laravel/framework: ^13.17` → `^12.0`, `laravel/tinker: ^3.0` → `^2.10.1`; rimosso `laravel/pao`, non necessario/non compatibile con L12; script `dev` tornato al pattern `concurrently` di L12 invece del comando `artisan dev` introdotto in L13; script `test` senza il placeholder `@no_additional_args` di L13). `composer.lock` rigenerato con `composer update` **senza** `--ignore-platform-reqs`, direttamente su PHP 8.2.12 locale, quindi verificato compatibile per davvero (non solo dichiarato). `backend/Dockerfile` aggiornato a `php:8.2-cli-bookworm`. Effetto: `composer install`/`php artisan` ora funzionano in locale senza aggiornare PHP; l'immagine Docker di produzione è più leggera/comune. Da rivalutare solo se in futuro si vuole tornare a Laravel 13+ (richiederebbe di nuovo PHP ≥8.3/8.4 sia in locale che in produzione).
 - **2026-08-22 — Downgrade toolchain frontend per allinearsi a Node 18 locale**: la macchina di sviluppo ha Node 18.17.1 reale; il frontend era scaffoldato con Vite 8 (richiede Node ^20.19.0 || >=22.12.0, usa `node:util`'s `styleText` non disponibile su Node 18), quindi `npm run build`/`npm run dev` fallivano subito con `SyntaxError` all'avvio. `frontend/package.json` aggiornato: `vite: ^8.2.0` → `^6.4.3` (ultima major compatibile con Node ^18.0.0), `@vitejs/plugin-vue: ^6.0.8` → `^5.2.4` (richiede peer `vite ^5||^6`), `@types/node: ^24.13.3` → `^18.19.0` (allineato alla versione Node reale). `vue-router` riportato da `^5.2.0` a `^4.6.4`: la v5 introduce un peer (opzionale ma comunque verificato da npm) su `vite ^7.3.0||^8.0.0` che riapriva lo stesso conflitto, e il codice (`src/router/index.ts`) usa solo API stabili già presenti in v4. `package-lock.json` rigenerato da zero con `npm install` pulito, verificato con `npm run build` (output in `dist/`) e `npm run dev` (server raggiungibile su `http://localhost:5173`, HTTP 200) su questa macchina. Da rivalutare se in futuro si aggiorna Node ad almeno 20.19+.
+- **2026-08-22 — Bug nel modello `User` dello scaffold iniziale**: `app/Models/User.php` usava attributi PHP `#[Fillable([...])]`/`#[Hidden([...])]` (`Illuminate\Database\Eloquent\Attributes\Fillable`/`Hidden`) che **non esistono** nel Laravel 12 effettivamente installato (verificato: nessun file `Fillable.php`/`Hidden.php` in `vendor/laravel/framework/.../Eloquent/Attributes/`). Erano inerti: nessun errore a runtime perché PHP non risolve le classi degli attributi finché non vengono lette via Reflection, ma **mass assignment e `hidden` di fatto non funzionavano** (`$guarded` di default Eloquent è `['*']` senza un `$fillable` reale → `User::create()` avrebbe lanciato `MassAssignmentException`). Corretto usando le property standard `protected $fillable`/`protected $hidden`, uniche supportate in questa versione. Attenzione a scaffold generati in futuro: verificare sempre che le feature usate esistano davvero in `vendor/`, non fidarsi della sintassi generata.
+- **2026-08-22 — Fase 2, Auth Sanctum implementata**: `composer require laravel/sanctum` (v4.3.3), `EnsureFrontendRequestsAreStateful` prependato al gruppo middleware `api` in `bootstrap/app.php`. `config/sanctum.php` pubblicato e modificato: `stateful` derivato da `FRONTEND_URL` (stessa fonte di `config/cors.php`) invece che da `SANCTUM_STATEFUL_DOMAINS` come default, per avere un solo posto da aggiornare. Niente tabella `personal_access_tokens`: non pubblicata la migration Sanctum perché l'app usa solo auth cookie-based (nessun token API/mobile pianificato, coerente con "nessuna app nativa" in Obiettivo) — se in futuro servissero token API andrà pubblicata. Migration `add_username_and_avatar_to_users_table`: rimuove `name` (non nello schema di AGENTS.md) e aggiunge `username` (unique) e `avatar` (nullable), coerente con lo schema `users` documentato. Verificato end-to-end con richieste `curl` reali (cookie jar + CSRF) oltre che con i feature test, non solo con test automatici. Dettagli completi in [docs/authentication.md](./docs/authentication.md).
