@@ -2,7 +2,7 @@
 
 PWA mobile-first che permette a un gruppo di amici di condividere le proprie attività in palestra: allenamenti, esercizi, serie e un feed sociale, con notifiche push del browser.
 
-Stato del progetto: **Fase 2 — Database + Auth** in corso (autenticazione Sanctum a token Bearer implementata). Amicizie, workout, feed e notifiche non ancora implementati.
+Stato del progetto: **Fase 3 — Friends** in corso (autenticazione Sanctum a token Bearer e amicizie implementate). Workout, feed e notifiche non ancora implementati.
 
 ## Stack
 
@@ -70,8 +70,8 @@ Il backend è pensato per essere ospitato su Railway (piano free). Vedi [docs/de
 Il progetto viene sviluppato per fasi incrementali (vedi [AGENTS.md](./AGENTS.md) per il dettaglio):
 
 1. ✅ Project Setup
-2. 🟡 Database + Auth (autenticazione fatta; amicizie/workout/feed di altre fasi)
-3. ⬜ Friends
+2. ✅ Database + Auth
+3. ✅ Friends
 4. ⬜ Workout
 5. ⬜ Feed
 6. ⬜ PWA

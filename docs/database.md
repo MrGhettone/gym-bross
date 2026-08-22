@@ -4,9 +4,9 @@
 
 MySQL / MariaDB, gestito interamente tramite Laravel migrations. Nessuna modifica manuale allo schema: ogni cambiamento passa da una migration.
 
-## Stato attuale (Fase 2)
+## Stato attuale (Fase 3)
 
-`users` implementata (migration di scaffold + `add_username_and_avatar_to_users_table` in Fase 2, che rimuove `name` e aggiunge `username`/`avatar`). Le altre tabelle sotto restano lo schema concettuale pianificato per le fasi successive.
+`users` implementata (migration di scaffold + `add_username_and_avatar_to_users_table` in Fase 2, che rimuove `name` e aggiunge `username`/`avatar`). `friendships` implementata in Fase 3. Le altre tabelle sotto restano lo schema concettuale pianificato per le fasi successive.
 
 ## Schema pianificato
 
@@ -21,19 +21,19 @@ MySQL / MariaDB, gestito interamente tramite Laravel migrations. Nessuna modific
 | avatar | string, nullable | |
 | created_at / updated_at | timestamp | |
 
-### `friendships`
+### `friendships` ✅
 
 Rappresenta una relazione tra due utenti con uno stato:
 
 | campo | tipo | note |
 |---|---|---|
 | id | bigint PK | |
-| requester_id | FK → users | chi ha inviato la richiesta |
-| addressee_id | FK → users | chi la riceve |
+| requester_id | FK → users, cascade on delete | chi ha inviato la richiesta |
+| addressee_id | FK → users, cascade on delete | chi la riceve |
 | status | enum | `pending`, `accepted`, `rejected`, `blocked` |
 | created_at / updated_at | timestamp | |
 
-Vincolo: nessuna coppia (requester, addressee) duplicata logicamente — da garantire con unique constraint/logica applicativa in Fase 3.
+Vincoli: unique DB su `(requester_id, addressee_id)` (stessa direzione non duplicabile); la direzione opposta (B→A quando A→B esiste già, in qualsiasi stato) è bloccata a livello applicativo in `StoreFriendshipRequest` — non esprimibile con un vincolo DB senza una colonna calcolata. Nessuna richiesta a se stessi.
 
 ### `exercises`
 
