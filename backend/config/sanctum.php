@@ -1,88 +1,24 @@
 <?php
 
-use Illuminate\Cookie\Middleware\EncryptCookies;
-use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
-use Laravel\Sanctum\Http\Middleware\AuthenticateSession;
-
 return [
 
     /*
     |--------------------------------------------------------------------------
-    | Stateful Domains
+    | API token auth (non SPA cookie auth)
     |--------------------------------------------------------------------------
     |
-    | Derivato da FRONTEND_URL (stessa fonte usata da config/cors.php) invece
-    | che da un env separato: l'host:porta del frontend e' l'unico dominio
-    | che deve ricevere i cookie di autenticazione stateful in questo
-    | progetto. Override possibile via SANCTUM_STATEFUL_DOMAINS (lista
-    | separata da virgole) solo se in futuro servissero domini aggiuntivi.
-    |
-    */
-
-    'stateful' => array_filter(explode(',', env('SANCTUM_STATEFUL_DOMAINS', (function () {
-        $frontend = parse_url(env('FRONTEND_URL', 'http://localhost:5173'));
-        $port = isset($frontend['port']) ? ':'.$frontend['port'] : '';
-
-        return ($frontend['host'] ?? 'localhost').$port;
-    })()))),
-
-    /*
-    |--------------------------------------------------------------------------
-    | Sanctum Guards
-    |--------------------------------------------------------------------------
-    |
-    | This array contains the authentication guards that will be checked when
-    | Sanctum is trying to authenticate a request. If none of these guards
-    | are able to authenticate the request, Sanctum will use the bearer
-    | token that's present on an incoming request for authentication.
-    |
-    */
-
-    'guard' => ['web'],
-
-    /*
-    |--------------------------------------------------------------------------
-    | Expiration Minutes
-    |--------------------------------------------------------------------------
-    |
-    | This value controls the number of minutes until an issued token will be
-    | considered expired. This will override any values set in the token's
-    | "expires_at" attribute, but first-party sessions are not affected.
+    | Frontend e backend sono su domini diversi in produzione (nessun dominio
+    | condiviso), quindi l'auth cookie-based di Sanctum non e' utilizzabile:
+    | il cookie XSRF-TOKEN impostato dal backend non e' leggibile via JS dal
+    | dominio del frontend, indipendentemente da SameSite/Secure. Si usa
+    | quindi solo l'auth a token Bearer (vedi AuthController), niente
+    | EnsureFrontendRequestsAreStateful in bootstrap/app.php, niente dominio
+    | stateful da configurare qui.
     |
     */
 
     'expiration' => null,
 
-    /*
-    |--------------------------------------------------------------------------
-    | Token Prefix
-    |--------------------------------------------------------------------------
-    |
-    | Sanctum can prefix new tokens in order to take advantage of numerous
-    | security scanning initiatives maintained by open source platforms
-    | that notify developers if they commit tokens into repositories.
-    |
-    | See: https://docs.github.com/en/code-security/secret-scanning/about-secret-scanning
-    |
-    */
-
     'token_prefix' => env('SANCTUM_TOKEN_PREFIX', ''),
-
-    /*
-    |--------------------------------------------------------------------------
-    | Sanctum Middleware
-    |--------------------------------------------------------------------------
-    |
-    | When authenticating your first-party SPA with Sanctum you may need to
-    | customize some of the middleware Sanctum uses while processing the
-    | request. You may change the middleware listed below as required.
-    |
-    */
-
-    'middleware' => [
-        'authenticate_session' => AuthenticateSession::class,
-        'encrypt_cookies' => EncryptCookies::class,
-        'validate_csrf_token' => ValidateCsrfToken::class,
-    ],
 
 ];

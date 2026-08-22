@@ -7,15 +7,17 @@ return [
     | Cross-Origin Resource Sharing (CORS) Configuration
     |--------------------------------------------------------------------------
     |
-    | Il frontend Vue (PWA) gira su un'origine diversa dal backend Laravel,
-    | quindi le origini consentite sono definite esplicitamente tramite
-    | env (FRONTEND_URL) invece di usare il wildcard '*', che non e'
-    | compatibile con supports_credentials=true richiesto dall'autenticazione
-    | Sanctum basata su cookie.
+    | Il frontend Vue gira su un dominio diverso dal backend Laravel (nessun
+    | dominio condiviso), quindi le origini consentite sono definite
+    | esplicitamente tramite env (FRONTEND_URL) invece di usare il wildcard
+    | '*'. L'autenticazione e' a token Bearer (Sanctum, non cookie-based:
+    | un cookie impostato dal backend non e' leggibile via JS da un dominio
+    | diverso), quindi supports_credentials resta false: nessun cookie da
+    | inviare cross-origin, il token va nell'header Authorization.
     |
     */
 
-    'paths' => ['api/*', 'sanctum/csrf-cookie'],
+    'paths' => ['api/*'],
 
     'allowed_methods' => ['*'],
 
@@ -29,6 +31,6 @@ return [
 
     'max_age' => 0,
 
-    'supports_credentials' => true,
+    'supports_credentials' => false,
 
 ];

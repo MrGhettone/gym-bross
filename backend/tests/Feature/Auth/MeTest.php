@@ -13,8 +13,10 @@ class MeTest extends TestCase
     public function test_an_authenticated_user_can_fetch_their_profile(): void
     {
         $user = User::factory()->create(['username' => 'mario']);
+        $token = $user->createToken('test')->plainTextToken;
 
-        $response = $this->actingAs($user, 'sanctum')->getJson('/api/v1/auth/me');
+        $response = $this->withHeader('Authorization', "Bearer {$token}")
+            ->getJson('/api/v1/auth/me');
 
         $response->assertOk();
         $response->assertJson([

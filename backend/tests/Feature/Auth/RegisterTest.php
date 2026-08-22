@@ -12,7 +12,7 @@ class RegisterTest extends TestCase
 
     public function test_a_user_can_register(): void
     {
-        $response = $this->fromFrontend()->postJson('/api/v1/auth/register', [
+        $response = $this->postJson('/api/v1/auth/register', [
             'username' => 'mario',
             'email' => 'mario@example.com',
             'password' => 'Password123!',
@@ -27,20 +27,26 @@ class RegisterTest extends TestCase
             ],
         ]);
         $response->assertJsonMissingPath('data.password');
+        $token = $response->json('token');
+        $this->assertIsString($token);
+        $this->assertNotEmpty($token);
 
         $this->assertDatabaseHas('users', [
             'username' => 'mario',
             'email' => 'mario@example.com',
         ]);
 
-        $this->assertAuthenticated();
+        // Il token appena emesso deve funzionare davvero su una rotta protetta.
+        $this->withHeader('Authorization', "Bearer {$token}")
+            ->getJson('/api/v1/auth/me')
+            ->assertOk();
     }
 
     public function test_registration_requires_a_unique_username(): void
     {
         User::factory()->create(['username' => 'mario']);
 
-        $response = $this->fromFrontend()->postJson('/api/v1/auth/register', [
+        $response = $this->postJson('/api/v1/auth/register', [
             'username' => 'mario',
             'email' => 'other@example.com',
             'password' => 'Password123!',
@@ -55,7 +61,7 @@ class RegisterTest extends TestCase
     {
         User::factory()->create(['email' => 'mario@example.com']);
 
-        $response = $this->fromFrontend()->postJson('/api/v1/auth/register', [
+        $response = $this->postJson('/api/v1/auth/register', [
             'username' => 'other',
             'email' => 'mario@example.com',
             'password' => 'Password123!',
@@ -68,7 +74,7 @@ class RegisterTest extends TestCase
 
     public function test_registration_requires_matching_password_confirmation(): void
     {
-        $response = $this->fromFrontend()->postJson('/api/v1/auth/register', [
+        $response = $this->postJson('/api/v1/auth/register', [
             'username' => 'mario',
             'email' => 'mario@example.com',
             'password' => 'Password123!',
