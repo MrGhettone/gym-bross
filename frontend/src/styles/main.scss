@@ -1,0 +1,71 @@
+:root {
+  --color-text: #6b6375;
+  --color-text-strong: #08060d;
+  --color-bg: #fff;
+  --color-border: #e5e4e7;
+  --color-accent: #aa3bff;
+  --color-accent-bg: rgba(170, 59, 255, 0.1);
+  --color-accent-border: rgba(170, 59, 255, 0.5);
+
+  --font-sans: system-ui, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: ui-monospace, Consolas, monospace;
+
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-text: #9ca3af;
+    --color-text-strong: #f3f4f6;
+    --color-bg: #16171d;
+    --color-border: #2e303a;
+    --color-accent: #c084fc;
+    --color-accent-bg: rgba(192, 132, 252, 0.15);
+    --color-accent-border: rgba(192, 132, 252, 0.5);
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font: 16px/1.45 var(--font-sans);
+  color: var(--color-text);
+  background: var(--color-bg);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  @include tablet-up {
+    font-size: 17px;
+  }
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  color: var(--color-text-strong);
+  margin: 0 0 0.5em;
+}
+
+p {
+  margin: 0 0 1em;
+}
+
+// Contenitore montato da Vue (index.html #app): shell a tutta altezza,
+// pensato mobile-first (le view riempiono lo schermo su mobile).
+#app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}

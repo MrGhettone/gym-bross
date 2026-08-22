@@ -1,0 +1,5 @@
+// Breakpoint valori puri Sass: nessun CSS emesso da questo file.
+// Approccio mobile-first: gli stili base targettano il mobile,
+// i mixin in _mixins.scss aggiungono override per tablet/desktop.
+$breakpoint-tablet: 768px;
+$breakpoint-desktop: 1024px;

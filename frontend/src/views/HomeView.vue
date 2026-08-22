@@ -35,21 +35,27 @@ onMounted(async () => {
   </main>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .home {
   padding: 1.5rem;
   text-align: center;
+
+  @include tablet-up {
+    padding: 2.5rem;
+  }
 }
 
-.status.online {
-  color: #16a34a;
-}
+.status {
+  &.online {
+    color: #16a34a;
+  }
 
-.status.offline {
-  color: #dc2626;
-}
+  &.offline {
+    color: #dc2626;
+  }
 
-.status.checking {
-  color: #6b7280;
+  &.checking {
+    color: #6b7280;
+  }
 }
 </style>
