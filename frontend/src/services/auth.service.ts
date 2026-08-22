@@ -1,4 +1,4 @@
-import { api, ensureCsrfCookie, type ApiResponse } from './api'
+import { api, type ApiResponse } from './api'
 
 export interface User {
   id: number
@@ -6,6 +6,11 @@ export interface User {
   email: string
   avatar: string | null
   created_at: string
+}
+
+export interface AuthResult {
+  user: User
+  token: string
 }
 
 export interface RegisterPayload {
@@ -20,21 +25,22 @@ export interface LoginPayload {
   password: string
 }
 
+interface AuthResponse extends ApiResponse<User> {
+  token: string
+}
+
 export const authService = {
-  async register(payload: RegisterPayload): Promise<User> {
-    await ensureCsrfCookie()
-    const response = await api.post<ApiResponse<User>>('/auth/register', payload)
-    return response.data
+  async register(payload: RegisterPayload): Promise<AuthResult> {
+    const response = await api.post<AuthResponse>('/auth/register', payload)
+    return { user: response.data, token: response.token }
   },
 
-  async login(payload: LoginPayload): Promise<User> {
-    await ensureCsrfCookie()
-    const response = await api.post<ApiResponse<User>>('/auth/login', payload)
-    return response.data
+  async login(payload: LoginPayload): Promise<AuthResult> {
+    const response = await api.post<AuthResponse>('/auth/login', payload)
+    return { user: response.data, token: response.token }
   },
 
   async logout(): Promise<void> {
-    await ensureCsrfCookie()
     await api.post('/auth/logout')
   },
 

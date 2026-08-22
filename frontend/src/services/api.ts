@@ -1,5 +1,4 @@
 const API_URL = import.meta.env.VITE_API_URL as string
-const API_ORIGIN = new URL(API_URL).origin
 
 export interface ApiResponse<T> {
   data: T
@@ -21,41 +20,31 @@ export class ApiError extends Error {
   }
 }
 
-const MUTATING_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE'])
-
-function readCookie(name: string): string | null {
-  const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`))
-  return match ? decodeURIComponent(match[1]) : null
-}
+let authToken: string | null = null
 
 /**
- * Va chiamata prima di register/login: fa emettere al backend il cookie
- * XSRF-TOKEN (Sanctum SPA), letto poi da `request()` per l'header
- * X-XSRF-TOKEN richiesto dalle richieste che modificano stato.
+ * Frontend e backend sono su domini diversi in produzione: l'auth cookie-based
+ * di Sanctum non e' utilizzabile (un cookie del backend non e' leggibile via
+ * JS da un altro dominio). Si usa quindi un token Bearer, tenuto in memoria
+ * qui e persistito da stores/auth.ts.
  */
-export async function ensureCsrfCookie(): Promise<void> {
-  await fetch(`${API_ORIGIN}/sanctum/csrf-cookie`, { credentials: 'include' })
+export function setAuthToken(token: string | null): void {
+  authToken = token
 }
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const method = (options.method ?? 'GET').toUpperCase()
   const headers: Record<string, string> = {
     Accept: 'application/json',
     'Content-Type': 'application/json',
     ...(options.headers as Record<string, string> | undefined),
   }
 
-  if (MUTATING_METHODS.has(method)) {
-    const xsrfToken = readCookie('XSRF-TOKEN')
-    if (xsrfToken) {
-      headers['X-XSRF-TOKEN'] = xsrfToken
-    }
+  if (authToken) {
+    headers.Authorization = `Bearer ${authToken}`
   }
 
   const response = await fetch(`${API_URL}${path}`, {
     ...options,
-    method,
-    credentials: 'include',
     headers,
   })
 
