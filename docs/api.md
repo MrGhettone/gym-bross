@@ -32,16 +32,16 @@ Verifica di connettività frontend↔backend, nessuna logica applicativa. Nessun
 
 ### `POST /api/v1/auth/register`
 
-Body: `username`, `email`, `password`, `password_confirmation`. Risposta `201` con `UserResource`, autentica subito l'utente (sessione). Vedi [docs/authentication.md](authentication.md).
+Body: `username`, `email`, `password`, `password_confirmation`. Risposta `201`: `{"data": <UserResource>, "token": "..."}` — auth a token Bearer, non sessione/cookie (domini frontend/backend diversi in produzione). Vedi [docs/authentication.md](authentication.md).
 
 ### `POST /api/v1/auth/login`
 
-Body: `email`, `password`. Risposta `200` con `UserResource`. Rate limited (`throttle:6,1`). `422` su credenziali errate.
+Body: `email`, `password`. Risposta `200`, stesso formato di `register`. Rate limited (`throttle:6,1`). `422` su credenziali errate.
 
 ### `POST /api/v1/auth/logout`
 
-Richiede `auth:sanctum`. Risposta `204`.
+Richiede `auth:sanctum` (header `Authorization: Bearer <token>`). Revoca solo il token usato per la richiesta. Risposta `204`.
 
 ### `GET /api/v1/auth/me`
 
-Richiede `auth:sanctum`. Risposta `200` con `UserResource` dell'utente autenticato, `401` se non autenticato.
+Richiede `auth:sanctum` (header `Authorization: Bearer <token>`). Risposta `200` con `UserResource` dell'utente autenticato, `401` se non autenticato/token non valido.

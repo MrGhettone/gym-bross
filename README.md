@@ -2,7 +2,7 @@
 
 PWA mobile-first che permette a un gruppo di amici di condividere le proprie attività in palestra: allenamenti, esercizi, serie e un feed sociale, con notifiche push del browser.
 
-Stato del progetto: **Fase 2 — Database + Auth** in corso (autenticazione Sanctum cookie-based implementata). Amicizie, workout, feed e notifiche non ancora implementati.
+Stato del progetto: **Fase 2 — Database + Auth** in corso (autenticazione Sanctum a token Bearer implementata). Amicizie, workout, feed e notifiche non ancora implementati.
 
 ## Stack
 
