@@ -49,6 +49,10 @@ async function onLogout() {
       <span v-if="backendDetail">({{ backendDetail }})</span>
     </p>
 
+    <nav class="nav">
+      <router-link :to="{ name: 'friends' }">Amici</router-link>
+    </nav>
+
     <button type="button" :disabled="loggingOut" @click="onLogout">
       {{ loggingOut ? 'Uscita in corso…' : 'Esci' }}
     </button>
@@ -76,6 +80,14 @@ async function onLogout() {
 
   &.checking {
     color: #6b7280;
+  }
+}
+
+.nav {
+  margin-top: 1.5rem;
+
+  a {
+    color: var(--color-accent);
   }
 }
 
