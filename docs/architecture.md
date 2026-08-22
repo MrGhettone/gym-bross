@@ -18,7 +18,7 @@ Gym Bros è composto da due progetti indipendenti che comunicano solo via API RE
 
 ## Perché questo stack
 
-- **Laravel 13**: framework maturo, batterie incluse (auth, validation, ORM, notifications, Sanctum), evita di reinventare autenticazione/autorizzazione.
+- **Laravel 12**: framework maturo, batterie incluse (auth, validation, ORM, notifications, Sanctum), evita di reinventare autenticazione/autorizzazione. Scelto (invece di Laravel 13) per allinearsi a PHP ^8.2, la versione reale disponibile sulla macchina di sviluppo.
 - **Sanctum (pianificato)**: adatto a un'architettura SPA/PWA con frontend e backend collegati in modo stretto; evita la complessità di JWT quando non è necessaria.
 - **Vue 3 + Vite + TS**: stack frontend leggero, tipizzato, con ottimo supporto PWA tramite `vite-plugin-pwa` (Fase 6).
 - **Nessun WebSocket/real-time in Fase 1-5**: il feed usa richieste HTTP normali; broadcasting/Reverb valutati solo se necessario in futuro.

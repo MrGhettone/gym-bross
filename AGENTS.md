@@ -9,7 +9,7 @@ PWA mobile-first per condividere allenamenti tra amici: account, amicizie, worko
 ## Stack
 
 - **Frontend**: Vue 3, Vite, TypeScript, Vue Router, Pinia, `vite-plugin-pwa` (da Fase 6), Web Push API. Nessun framework CSS/UI aggiuntivo installato per ora.
-- **Backend**: Laravel 13, PHP ^8.3, Eloquent, Laravel Sanctum (da Fase 2), MySQL/MariaDB.
+- **Backend**: Laravel 12, PHP ^8.2, Eloquent, Laravel Sanctum (da Fase 2), MySQL/MariaDB.
 - Nessun altro framework PHP o JS di stato globale. Nessun Redis/WebSocket/microservizi salvo necessità reale futura.
 
 ## Architettura
@@ -75,7 +75,7 @@ Ogni modifica schema passa da una migration Laravel. Mai modificare il DB a mano
 ## Notifiche (pianificate, Fase 7)
 
 - Web Push standard: Service Worker + Push API + Notification API + VAPID.
-- Libreria PHP Web Push da scegliere in Fase 7 (verificare compatibilità Laravel 13/PHP 8.3+, manutenzione attiva) — non implementare la crittografia Web Push a mano.
+- Libreria PHP Web Push da scegliere in Fase 7 (verificare compatibilità Laravel 12/PHP 8.2+, manutenzione attiva) — non implementare la crittografia Web Push a mano.
 - Chiavi VAPID solo via env (`VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`), mai committate.
 
 ## PWA (pianificata, Fase 6)
@@ -90,7 +90,7 @@ Ogni modifica schema passa da una migration Laravel. Mai modificare il DB a mano
 
 ## Comandi di sviluppo
 
-Backend (richiede PHP 8.3+, vedi "Decisioni architetturali / problemi aperti"):
+Backend (richiede PHP 8.2+, vedi "Decisioni architetturali / problemi aperti"):
 
 ```bash
 cd backend
@@ -122,4 +122,6 @@ npm run build
 - **2026-08-20 — MySQL locale**: nessun server MySQL/MariaDB rilevato in locale; `.env` configurato per MySQL (`gym_bros` db) ma il server va installato/avviato separatamente prima delle migration.
 - **2026-08-20 — Hosting backend su Railway (piano free)**: aggiunti `backend/start.sh` (migrate + `php artisan serve` su `0.0.0.0:$PORT`) e `backend/railway.json`. Prerequisito non automatizzabile da repo: nella dashboard Railway il servizio deve avere **Root Directory = `backend`** (il repo è un monorepo).
 - **2026-08-20 — Da Railpack (auto-detect) a Dockerfile esplicito**: il rilevamento automatico di Railway (Railpack) ha continuato a scansionare la root dell'intero repo invece di `backend/`, sia su un servizio da Template sia su un servizio con Root Directory impostato manualmente — comportamento non affidabile lato piattaforma per questo progetto, non un problema nel codice. Aggiunto `backend/Dockerfile` + `backend/.dockerignore`, e `railway.json` aggiornato con `"builder": "DOCKERFILE"` per bypassare del tutto l'euristica di Railpack. Troubleshooting dettagliato in [docs/deployment.md](./docs/deployment.md).
-- **2026-08-20 — Immagine Docker PHP 8.4, non 8.3**: `composer install` nel build Docker falliva su pacchetti Symfony che richiedono `php >=8.4.1` (bloccati nel `composer.lock` a causa del `--ignore-platform-reqs` iniziale, vedi sopra). `backend/Dockerfile` usa quindi `php:8.4-cli-bookworm`. Requisito locale aggiornato di conseguenza a PHP **8.4.1+** (non più solo 8.3+) per restare coerenti col lock file committato. Da rivalutare se in futuro si rigenera il lock file su una macchina con PHP 8.3 reale.
+- **2026-08-20 — Immagine Docker PHP 8.4, non 8.3**: `composer install` nel build Docker falliva su pacchetti Symfony che richiedono `php >=8.4.1` (bloccati nel `composer.lock` a causa del `--ignore-platform-reqs` iniziale, vedi sopra). `backend/Dockerfile` usa quindi `php:8.4-cli-bookworm`. Requisito locale aggiornato di conseguenza a PHP **8.4.1+** (non più solo 8.3+) per restare coerenti col lock file committato. **Superato dalla decisione del 2026-08-22 sotto.**
+- **2026-08-22 — Downgrade a Laravel 12 per allinearsi a PHP 8.2 locale**: la macchina di sviluppo ha PHP 8.2.12 reale (non aggiornabile nell'immediato), quindi invece di inseguire PHP 8.4.1+ si è tornati a **Laravel 12** (richiede solo PHP ^8.2), eliminando il vincolo a cascata su Symfony 8.1.x introdotto da Laravel 13. `backend/composer.json` aggiornato (`php: ^8.3` → `^8.2`, `laravel/framework: ^13.17` → `^12.0`, `laravel/tinker: ^3.0` → `^2.10.1`; rimosso `laravel/pao`, non necessario/non compatibile con L12; script `dev` tornato al pattern `concurrently` di L12 invece del comando `artisan dev` introdotto in L13; script `test` senza il placeholder `@no_additional_args` di L13). `composer.lock` rigenerato con `composer update` **senza** `--ignore-platform-reqs`, direttamente su PHP 8.2.12 locale, quindi verificato compatibile per davvero (non solo dichiarato). `backend/Dockerfile` aggiornato a `php:8.2-cli-bookworm`. Effetto: `composer install`/`php artisan` ora funzionano in locale senza aggiornare PHP; l'immagine Docker di produzione è più leggera/comune. Da rivalutare solo se in futuro si vuole tornare a Laravel 13+ (richiederebbe di nuovo PHP ≥8.3/8.4 sia in locale che in produzione).
+- **2026-08-22 — Downgrade toolchain frontend per allinearsi a Node 18 locale**: la macchina di sviluppo ha Node 18.17.1 reale; il frontend era scaffoldato con Vite 8 (richiede Node ^20.19.0 || >=22.12.0, usa `node:util`'s `styleText` non disponibile su Node 18), quindi `npm run build`/`npm run dev` fallivano subito con `SyntaxError` all'avvio. `frontend/package.json` aggiornato: `vite: ^8.2.0` → `^6.4.3` (ultima major compatibile con Node ^18.0.0), `@vitejs/plugin-vue: ^6.0.8` → `^5.2.4` (richiede peer `vite ^5||^6`), `@types/node: ^24.13.3` → `^18.19.0` (allineato alla versione Node reale). `vue-router` riportato da `^5.2.0` a `^4.6.4`: la v5 introduce un peer (opzionale ma comunque verificato da npm) su `vite ^7.3.0||^8.0.0` che riapriva lo stesso conflitto, e il codice (`src/router/index.ts`) usa solo API stabili già presenti in v4. `package-lock.json` rigenerato da zero con `npm install` pulito, verificato con `npm run build` (output in `dist/`) e `npm run dev` (server raggiungibile su `http://localhost:5173`, HTTP 200) su questa macchina. Da rivalutare se in futuro si aggiorna Node ad almeno 20.19+.

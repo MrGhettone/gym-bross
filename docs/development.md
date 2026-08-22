@@ -2,9 +2,9 @@
 
 ## Requisiti
 
-- PHP **8.4.1+** (Laravel 13 richiede PHP ^8.3 in `composer.json`, ma il `composer.lock` committato ha bloccato pacchetti Symfony che richiedono PHP ≥8.4.1 — vedi nota sotto. L'immagine Docker di produzione usa `php:8.4-cli-bookworm`, quindi conviene allinearsi anche in locale)
+- PHP **8.2+** (Laravel 12 richiede PHP ^8.2 in `composer.json`; l'immagine Docker di produzione usa `php:8.2-cli-bookworm`)
 - Composer 2.x
-- Node.js 20+ / npm
+- Node.js **18.17+** (vedi nota sotto: il toolchain frontend è vincolato a Vite 6.x per restare compatibile con Node 18, non richiede Node 20+)
 - MySQL o MariaDB
 
 ## Setup backend
@@ -44,14 +44,11 @@ npm run build     # type-check (vue-tsc) + build produzione
 npm run dev        # dev server
 ```
 
-## Stato ambiente locale noto (2026-08-20)
+## Stato ambiente locale noto (2026-08-22)
 
 Sulla macchina di sviluppo usata per l'inizializzazione del progetto:
 
-- PHP installato: 8.2.30 → **incompatibile** con Laravel 13. `php artisan` termina con errore di parsing su sintassi PHP 8.3.
-- Il backend è stato scaffoldato con `composer create-project ... --ignore-platform-reqs` (necessario per bypassare il controllo PHP 8.2 in fase di scaffold). Questo ha però fatto sì che Composer, senza vincoli di piattaforma da rispettare, bloccasse nel `composer.lock` versioni di Symfony (8.1.x) che richiedono **PHP ≥8.4.1** — un requisito più stretto di quanto dichiarato in `composer.json` (`^8.3`). Il deploy su Railway ha fallito la prima volta proprio per questo (immagine Docker su PHP 8.3), risolto allineando l'immagine a `php:8.4-cli-bookworm`.
-- Di conseguenza, per eseguire `composer install` (non solo `composer update`) su questo lock file serve **PHP 8.4.1+** anche in locale, non semplicemente 8.3+.
+- PHP installato: 8.2.12. Il backend è stato inizialmente scaffoldato con Laravel 13 (richiede PHP ^8.3, con `composer.lock` che di fatto bloccava Symfony 8.1.x, cioè PHP ≥8.4.1), incompatibile con questa macchina. Il 2026-08-22 il progetto è stato riportato a **Laravel 12** (richiede solo PHP ^8.2) per allinearsi al PHP locale reale invece di richiedere un aggiornamento PHP — vedi decisione in [AGENTS.md](../AGENTS.md#decisioni-architetturali--problemi-aperti).
+- `composer.lock` rigenerato con `composer update` **senza** `--ignore-platform-reqs`, direttamente su PHP 8.2.12, quindi verificato installabile per davvero su questa macchina.
 - Nessun server MySQL/MariaDB rilevato in locale.
-- Il frontend (Vue/Vite) funziona correttamente con Node 24 / npm 11: `npm run build` e `npm run dev` verificati con successo.
-
-Se in futuro si vuole tornare a supportare PHP 8.3 puro in locale, occorre rigenerare il lock file con `composer update` da una macchina/container con PHP 8.3 (non 8.2), così Composer risolve versioni Symfony compatibili con 8.3 invece delle 8.1.x attuali.
+- Node installato: 18.17.1 / npm 9.6.7. Il frontend era inizialmente scaffoldato con Vite 8 (richiede Node ^20.19.0 || >=22.12.0): `npm run build` falliva subito con `SyntaxError: ... 'node:util' does not provide an export named 'styleText'`, un'API Node introdotta dopo la 18. Il 2026-08-22 il toolchain è stato riportato a **Vite 6** (compatibile con Node ^18.0.0) — vedi decisione in [AGENTS.md](../AGENTS.md#decisioni-architetturali--problemi-aperti). `vue-router` è stato inoltre riportato dalla 5.x (peer dependency opzionale ma conflittuale su `vite`/`pinia`) alla **4.x**, coerente con le API già usate in `src/router/index.ts` (nessuna funzionalità di v5 in uso). `npm run build` e `npm run dev` verificati con successo su questa configurazione.

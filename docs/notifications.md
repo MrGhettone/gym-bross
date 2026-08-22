@@ -9,7 +9,7 @@ Web Push standard del browser:
 - Service Worker (frontend)
 - Push API + Notification API (frontend)
 - VAPID (backend, chiavi via env: `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`)
-- Libreria PHP Web Push lato Laravel — da scegliere in Fase 7 verificando compatibilità con Laravel 13/PHP 8.3+ e manutenzione attiva. Non implementare la crittografia Web Push a mano.
+- Libreria PHP Web Push lato Laravel — da scegliere in Fase 7 verificando compatibilità con Laravel 12/PHP 8.2+ e manutenzione attiva. Non implementare la crittografia Web Push a mano.
 
 ## Flusso previsto
 
