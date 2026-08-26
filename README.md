@@ -2,7 +2,7 @@
 
 PWA mobile-first che permette a un gruppo di amici di condividere le proprie attività in palestra: allenamenti, esercizi, serie e un feed sociale, con notifiche push del browser.
 
-Stato del progetto: **Fase 3 — Friends** in corso (autenticazione Sanctum a token Bearer e amicizie implementate). Workout, feed e notifiche non ancora implementati.
+Stato del progetto: **Fase 4 — Workout** in corso (autenticazione, amicizie e workout implementati). Feed e notifiche non ancora implementati.
 
 ## Stack
 
@@ -72,7 +72,7 @@ Il progetto viene sviluppato per fasi incrementali (vedi [AGENTS.md](./AGENTS.md
 1. ✅ Project Setup
 2. ✅ Database + Auth
 3. ✅ Friends
-4. ⬜ Workout
+4. ✅ Workout
 5. ⬜ Feed
 6. ⬜ PWA
 7. ⬜ Web Push

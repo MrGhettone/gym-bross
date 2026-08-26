@@ -15,8 +15,9 @@
 /api/v1/auth/*           Fase 2 ✅
 /api/v1/users/*          Fase 3 ✅ (solo lookup pubblico per username)
 /api/v1/friends/*        Fase 3 ✅
-/api/v1/workouts/*       Fase 4
-/api/v1/exercises/*      Fase 4
+/api/v1/workouts/*       Fase 4 ✅
+/api/v1/exercises/*      Fase 4 ✅
+/api/v1/workout-sets/*   Fase 4 ✅ (update/delete di una singola serie)
 /api/v1/notifications/*  Fase 7
 ```
 
@@ -73,3 +74,47 @@ Richiede `auth:sanctum`. Una delle due parti può bloccare la relazione (in qual
 ### `DELETE /api/v1/friends/{friendship}`
 
 Richiede `auth:sanctum`. Cancella la richiesta: solo il `requester` se `pending` (annulla), oppure una delle due parti se `accepted` (rimuove l'amicizia). `403` negli altri casi. Risposta `204`.
+
+### `GET /api/v1/exercises`
+
+Richiede `auth:sanctum`. Catalogo condiviso (non per-utente). Filtro opzionale `?search=`. Risposta `200` con array di `ExerciseResource` (`id`, `name`, `description`).
+
+### `POST /api/v1/exercises`
+
+Richiede `auth:sanctum`. Body: `name` (univoco), `description` opzionale. Qualsiasi utente autenticato può aggiungere un esercizio al catalogo. Risposta `201`.
+
+### `GET /api/v1/workouts`
+
+Richiede `auth:sanctum`. Lista i workout dell'utente autenticato (tutti gli stati), più recenti prima. `WorkoutResource` senza `exercises` (solo su `show`).
+
+### `POST /api/v1/workouts`
+
+Richiede `auth:sanctum`. Avvia un nuovo workout (`status: active`, `started_at: now()`). `422` se l'utente ha già un workout `active`. Risposta `201`.
+
+### `GET /api/v1/workouts/{workout}`
+
+Richiede `auth:sanctum`, solo il proprietario (altrimenti `403`). Risposta `200` con `WorkoutResource` incluso `exercises[].sets`.
+
+### `PATCH /api/v1/workouts/{workout}/finish` · `PATCH /api/v1/workouts/{workout}/cancel`
+
+Richiede `auth:sanctum`, solo il proprietario e solo se il workout è `active` (altrimenti `403`). Imposta `status` (`completed`/`cancelled`) e `finished_at: now()`.
+
+### `DELETE /api/v1/workouts/{workout}`
+
+Richiede `auth:sanctum`, solo il proprietario, in qualsiasi stato. Risposta `204`.
+
+### `POST /api/v1/workouts/{workout}/exercises`
+
+Richiede `auth:sanctum`, solo il proprietario e solo se il workout è `active`. Body: `exercise_id`. `order` assegnato automaticamente (max esistente + 1). Risposta `201` con `WorkoutExerciseResource`.
+
+### `DELETE /api/v1/workouts/{workout}/exercises/{workoutExercise}`
+
+Come sopra. `404` se `workoutExercise` non appartiene a `workout`.
+
+### `POST /api/v1/workouts/{workout}/exercises/{workoutExercise}/sets`
+
+Richiede `auth:sanctum`, solo il proprietario e solo se il workout è `active`. Body: `weight`/`repetitions`/`duration`/`distance` (tutti opzionali, ma almeno uno richiesto). `set_number` assegnato automaticamente. Risposta `201` con `WorkoutSetResource`.
+
+### `PATCH /api/v1/workout-sets/{workoutSet}` · `DELETE /api/v1/workout-sets/{workoutSet}`
+
+Richiede `auth:sanctum`; autorizzazione risolta risalendo a `workoutSet.workoutExercise.workout` (stesse regole di `manageExercises`: proprietario, workout `active`).
