@@ -4,6 +4,8 @@ import FriendsView from '../views/FriendsView.vue'
 import HomeView from '../views/HomeView.vue'
 import LoginView from '../views/LoginView.vue'
 import RegisterView from '../views/RegisterView.vue'
+import WorkoutDetailView from '../views/WorkoutDetailView.vue'
+import WorkoutsView from '../views/WorkoutsView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -18,6 +20,18 @@ const router = createRouter({
       path: '/friends',
       name: 'friends',
       component: FriendsView,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/workouts',
+      name: 'workouts',
+      component: WorkoutsView,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/workouts/:id',
+      name: 'workout-detail',
+      component: WorkoutDetailView,
       meta: { requiresAuth: true },
     },
     {

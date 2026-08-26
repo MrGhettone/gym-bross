@@ -50,6 +50,7 @@ async function onLogout() {
     </p>
 
     <nav class="nav">
+      <router-link :to="{ name: 'workouts' }">Allenamenti</router-link>
       <router-link :to="{ name: 'friends' }">Amici</router-link>
     </nav>
 
@@ -85,6 +86,9 @@ async function onLogout() {
 
 .nav {
   margin-top: 1.5rem;
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
 
   a {
     color: var(--color-accent);
