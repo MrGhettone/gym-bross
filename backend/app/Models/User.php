@@ -47,4 +47,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(Friendship::class, 'addressee_id');
     }
+
+    public function workouts(): HasMany
+    {
+        return $this->hasMany(Workout::class);
+    }
 }
