@@ -4,9 +4,11 @@ import { useRoute, useRouter } from 'vue-router'
 import { ApiError } from '../services/api'
 import { exercisesService } from '../services/exercises.service'
 import { workoutsService, type Workout } from '../services/workouts.service'
+import { useAuthStore } from '../stores/auth'
 
 const route = useRoute()
 const router = useRouter()
+const auth = useAuthStore()
 
 const workoutId = Number(route.params.id)
 const workout = ref<Workout | null>(null)
@@ -23,6 +25,8 @@ const finishing = ref(false)
 const cancelling = ref(false)
 
 const isActive = computed(() => workout.value?.status === 'active')
+const isOwner = computed(() => workout.value?.user?.id === auth.user?.id)
+const canEdit = computed(() => isActive.value && isOwner.value)
 
 onMounted(load)
 
@@ -122,7 +126,7 @@ async function onCancel() {
 
 <template>
   <main class="workout" v-if="!loading && workout">
-    <h1>Allenamento</h1>
+    <h1>Allenamento<span v-if="!isOwner && workout.user"> di {{ workout.user.username }}</span></h1>
     <p class="meta">
       {{ new Date(workout.started_at).toLocaleString('it-IT') }} — {{ workout.status }}
     </p>
@@ -132,7 +136,7 @@ async function onCancel() {
     <section v-for="we in workout.exercises" :key="we.id" class="exercise">
       <div class="exercise-header">
         <h2>{{ we.exercise.name }}</h2>
-        <button v-if="isActive" type="button" class="link" @click="onRemoveExercise(we.id)">Rimuovi</button>
+        <button v-if="canEdit" type="button" class="link" @click="onRemoveExercise(we.id)">Rimuovi</button>
       </div>
 
       <ul class="sets">
@@ -142,11 +146,11 @@ async function onCancel() {
           <span v-if="s.repetitions">{{ s.repetitions }} rip</span>
           <span v-if="s.duration">{{ s.duration }} s</span>
           <span v-if="s.distance">{{ s.distance }} m</span>
-          <button v-if="isActive" type="button" class="link" @click="onDeleteSet(s.id)">×</button>
+          <button v-if="canEdit" type="button" class="link" @click="onDeleteSet(s.id)">×</button>
         </li>
       </ul>
 
-      <form v-if="isActive" class="set-form" @submit.prevent="onLogSet(we.id)">
+      <form v-if="canEdit" class="set-form" @submit.prevent="onLogSet(we.id)">
         <input v-model="setDrafts[we.id].weight" type="number" step="0.01" placeholder="kg" />
         <input v-model="setDrafts[we.id].repetitions" type="number" placeholder="rip" />
         <input v-model="setDrafts[we.id].duration" type="number" placeholder="sec" />
@@ -155,14 +159,14 @@ async function onCancel() {
       </form>
     </section>
 
-    <form v-if="isActive" class="add-exercise" @submit.prevent="onAddExercise">
+    <form v-if="canEdit" class="add-exercise" @submit.prevent="onAddExercise">
       <input v-model="newExerciseName" type="text" placeholder="Nome esercizio" required />
       <button type="submit" :disabled="addingExercise">
         {{ addingExercise ? '…' : 'Aggiungi esercizio' }}
       </button>
     </form>
 
-    <div v-if="isActive" class="lifecycle">
+    <div v-if="canEdit" class="lifecycle">
       <button type="button" :disabled="finishing" @click="onFinish">
         {{ finishing ? 'Salvataggio…' : 'Termina allenamento' }}
       </button>

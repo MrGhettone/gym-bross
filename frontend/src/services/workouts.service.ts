@@ -1,5 +1,6 @@
 import { api, type ApiResponse } from './api'
 import type { Exercise } from './exercises.service'
+import type { PublicUser } from './users.service'
 
 export type WorkoutStatus = 'active' | 'completed' | 'cancelled'
 
@@ -24,6 +25,7 @@ export interface Workout {
   status: WorkoutStatus
   started_at: string
   finished_at: string | null
+  user?: PublicUser
   exercises?: WorkoutExerciseEntry[]
 }
 

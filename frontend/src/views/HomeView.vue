@@ -50,6 +50,7 @@ async function onLogout() {
     </p>
 
     <nav class="nav">
+      <router-link :to="{ name: 'feed' }">Feed</router-link>
       <router-link :to="{ name: 'workouts' }">Allenamenti</router-link>
       <router-link :to="{ name: 'friends' }">Amici</router-link>
     </nav>
