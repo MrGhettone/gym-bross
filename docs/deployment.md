@@ -78,6 +78,18 @@ Copiare il valore restituito (es. `base64:...`) nella variabile `APP_KEY` su Rai
 
 `FRONTEND_URL` (già usata in `backend/config/cors.php`) deve puntare al dominio di produzione reale del frontend, non a `localhost`, altrimenti le richieste dal frontend deployato verranno bloccate dal CORS.
 
+### 5. VAPID (Web Push, Fase 7)
+
+Backend (Railway → servizio backend → Variables), stessi valori generati in locale (`backend/.env`, mai rigenerarli per ambiente — VAPID è pensato per restare stabile):
+
+```
+VAPID_PUBLIC_KEY=<da backend/.env>
+VAPID_PRIVATE_KEY=<da backend/.env>
+VAPID_SUBJECT=mailto:mrghettone@gmail.com
+```
+
+Frontend (Vercel → progetto → **Settings → Environment Variables**): `VITE_VAPID_PUBLIC_KEY` con lo **stesso valore** di `VAPID_PUBLIC_KEY` sopra (è la chiave pubblica, nessun problema a impostarla anche lì). Importante: Vite inietta le variabili `VITE_*` **in fase di build**, non a runtime — dopo averla aggiunta su Vercel serve un **redeploy** (o un nuovo push) perché una build già esistente non la recepisce da sola.
+
 ## Troubleshooting
 
 ### "Railpack could not determine how to build the app" / "Script start.sh not found"
@@ -102,7 +114,13 @@ Fino al 2026-08-20 il progetto era su Laravel 13 (richiede PHP ^8.3), ma il `com
 - Il servizio può andare in sleep/riavviarsi per inattività a seconda dei limiti del piano: la prima richiesta dopo un periodo di inattività può essere più lenta.
 - `php artisan serve` è il server di sviluppo integrato di PHP: sufficiente per un MVP a basso traffico sul piano free, ma non è pensato per carichi di produzione elevati. Da rivalutare (es. PHP-FPM + Nginx via Dockerfile) se il traffico cresce.
 
-## Cosa NON è ancora gestito
+## Frontend
 
-- Deploy del frontend (non ancora deciso dove ospitarlo — puà essere un altro servizio Railway a sé stante come static site, o altrove).
-- VAPID keys per Web Push: da impostare come variabili Railway solo in Fase 7.
+Deployato su **Vercel** (dominio separato dal backend Railway — per questo l'autenticazione è a token Bearer e non cookie-based, vedi [docs/authentication.md](authentication.md)). Variabili d'ambiente da impostare su Vercel (Project → Settings → Environment Variables), entrambe richieste in build, non a runtime:
+
+```
+VITE_API_URL=https://<dominio-pubblico-backend-railway>/api/v1
+VITE_VAPID_PUBLIC_KEY=<stesso valore di VAPID_PUBLIC_KEY sul backend>
+```
+
+Ricordarsi il **redeploy** su Vercel dopo aver aggiunto/cambiato una variabile `VITE_*`.
