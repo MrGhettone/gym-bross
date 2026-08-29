@@ -10,10 +10,10 @@ Per eliminare questa ambiguità, il backend usa un **Dockerfile esplicito**: Rai
 
 ## File di configurazione nel repo
 
-- `backend/Dockerfile` — immagine PHP 8.2 CLI (coerente con Laravel 12, che richiede PHP ^8.2), installa le estensioni necessarie (pdo_mysql, mbstring, xml, zip), esegue `composer install`, poi avvia `bash start.sh`.
-- `backend/.dockerignore` — esclude `.git`, `vendor/`, `.env`, log/cache locali dal contesto di build.
+- `backend/Dockerfile` — immagine PHP 8.2 CLI (coerente con Laravel 12, che richiede PHP ^8.2), installa le estensioni necessarie (pdo_mysql, mbstring, xml, zip), esegue `composer install`, ricrea le sottocartelle di `storage/` escluse da `.dockerignore` (vedi sotto), poi avvia `bash start.sh`.
+- `backend/.dockerignore` — esclude `.git`, `vendor/`, `.env`, log/cache locali dal contesto di build. **Attenzione**: esclude anche `storage/framework/{cache/data,sessions,views}` e `storage/logs` — cartelle vuote mai tracciate da git, quindi senza il passaggio dedicato nel Dockerfile **non esistono affatto** nell'immagine, e qualunque rendering di vista Blade (comprese le pagine di errore quando `APP_DEBUG=false`) fallisce non riuscendo a scrivere la cache compilata. Vedi troubleshooting sotto.
 - `backend/start.sh` — script di avvio del container: esegue le migration (`php artisan migrate --force`) e poi avvia il server PHP integrato (`php artisan serve`) sull'host/porta forniti da Railway. Adeguato per il piano free (nessun bisogno di Nginx/PHP-FPM separati).
-- `backend/railway.json` — config-as-code per Railway: `builder: DOCKERFILE`, `dockerfilePath: Dockerfile`, healthcheck su `/up` (route di health-check nativa di Laravel, già registrata in `bootstrap/app.php`).
+- `backend/railway.json` — config-as-code per Railway: `builder: DOCKERFILE`, `dockerfilePath: Dockerfile`, healthcheck su `/up`. **Non** la route di health-check nativa di Laravel: c'è una route custom in `routes/web.php` che risponde con JSON (`response()->json(...)`, nessuna vista Blade) — vedi troubleshooting sotto per il perché.
 
 ## Passaggi da fare nella dashboard Railway (non automatizzabili da qui)
 
@@ -103,6 +103,14 @@ Fix: passare al builder **Dockerfile** (vedi sezione sopra), che bypassa del tut
 ### Il servizio era da Template e non risponde ai cambi di Root Directory/Builder
 
 Se cambiare Root Directory e Builder sullo stesso servizio non ha effetto sui log di build, creare un **servizio nuovo** con **"+ New" → "GitHub Repo"** (non da Template) selezionando `MrGhettone/gym-bross` direttamente, ripetere la configurazione (Root Directory, Builder Dockerfile, variabili d'ambiente — si può riusare lo stesso plugin MySQL del progetto), fare il deploy sul nuovo servizio ed eliminare quello vecchio una volta verificato che funziona.
+
+### Healthcheck `/up` fallisce (o una vista Blade qualsiasi restituisce 500) solo su Railway, non in locale
+
+Sintomo: `php artisan serve` in locale funziona, ma su Railway l'healthcheck su `/up` fallisce (o, più in generale, qualunque pagina che renderizza una vista Blade dà errore in produzione ma non in locale).
+
+Causa: `storage/framework/cache/data`, `storage/framework/sessions`, `storage/framework/views` e `storage/logs` sono cartelle vuote — git non traccia cartelle vuote, quindi non esistono nel repo, e sono **anche** esplicitamente escluse da `backend/.dockerignore`. Il risultato è che nell'immagine Docker queste cartelle non esistono affatto. Blade **deve** scrivere la cache dei template compilati in `storage/framework/views/`: senza quella cartella qualunque `view()`/rendering Blade fallisce. In locale non si nota perché quelle cartelle esistono già su disco (create da Laravel durante lo sviluppo).
+
+Fix: `backend/Dockerfile` ricrea queste cartelle esplicitamente dopo `COPY . .` (`RUN mkdir -p storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs && chmod -R 775 storage bootstrap/cache`). Per questo motivo, inoltre, la route `/up` in `routes/web.php` è una route custom che risponde con `response()->json(...)` invece di usare la route di health-check nativa di Laravel (che renderizza una vista Blade): bypassa il problema a monte anche se in futuro la creazione delle cartelle dovesse rompersi di nuovo, con una singola route che non dipende da Blade.
 
 ### (Storico) `composer install` falliva con "requires php >=8.4.1"
 
