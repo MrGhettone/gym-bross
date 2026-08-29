@@ -5,7 +5,7 @@ namespace App\Http\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class WorkoutResource extends JsonResource
+class FeedWorkoutResource extends JsonResource
 {
     /**
      * @return array<string, mixed>
@@ -17,8 +17,8 @@ class WorkoutResource extends JsonResource
             'status' => $this->status,
             'started_at' => $this->started_at,
             'finished_at' => $this->finished_at,
+            'exercises_count' => $this->workout_exercises_count,
             'user' => new PublicUserResource($this->whenLoaded('user')),
-            'exercises' => WorkoutExerciseResource::collection($this->whenLoaded('workoutExercises')),
         ];
     }
 }

@@ -3,6 +3,7 @@
 namespace Tests\Feature\Workouts;
 
 use App\Enums\WorkoutStatus;
+use App\Models\Friendship;
 use App\Models\User;
 use App\Models\Workout;
 use App\Models\WorkoutExercise;
@@ -35,6 +36,32 @@ class WorkoutLifecycleTest extends TestCase
         $workout = Workout::factory()->create();
         Sanctum::actingAs(User::factory()->create());
 
+        $response = $this->getJson("/api/v1/workouts/{$workout->id}");
+
+        $response->assertForbidden();
+    }
+
+    public function test_an_accepted_friend_can_view_the_workout(): void
+    {
+        $owner = User::factory()->create();
+        $friend = User::factory()->create();
+        Friendship::factory()->accepted()->create(['requester_id' => $owner->id, 'addressee_id' => $friend->id]);
+        $workout = Workout::factory()->completed()->create(['user_id' => $owner->id]);
+
+        Sanctum::actingAs($friend);
+        $response = $this->getJson("/api/v1/workouts/{$workout->id}");
+
+        $response->assertOk();
+    }
+
+    public function test_a_pending_friend_cannot_view_the_workout(): void
+    {
+        $owner = User::factory()->create();
+        $notYetFriend = User::factory()->create();
+        Friendship::factory()->create(['requester_id' => $owner->id, 'addressee_id' => $notYetFriend->id]);
+        $workout = Workout::factory()->completed()->create(['user_id' => $owner->id]);
+
+        Sanctum::actingAs($notYetFriend);
         $response = $this->getJson("/api/v1/workouts/{$workout->id}");
 
         $response->assertForbidden();

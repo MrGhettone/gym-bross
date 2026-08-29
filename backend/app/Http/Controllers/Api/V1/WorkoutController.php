@@ -16,7 +16,7 @@ class WorkoutController extends Controller
 {
     public function index(Request $request): AnonymousResourceCollection
     {
-        $workouts = $request->user()->workouts()->orderByDesc('started_at')->get();
+        $workouts = $request->user()->workouts()->with('user')->orderByDesc('started_at')->get();
 
         return WorkoutResource::collection($workouts);
     }
@@ -28,6 +28,7 @@ class WorkoutController extends Controller
             'started_at' => now(),
             'status' => WorkoutStatus::Active,
         ]);
+        $workout->setRelation('user', $request->user());
 
         return (new WorkoutResource($workout))->response()->setStatusCode(201);
     }
@@ -36,7 +37,7 @@ class WorkoutController extends Controller
     {
         Gate::authorize('view', $workout);
 
-        return new WorkoutResource($workout->load('workoutExercises.exercise', 'workoutExercises.sets'));
+        return new WorkoutResource($workout->load('workoutExercises.exercise', 'workoutExercises.sets', 'user'));
     }
 
     public function finish(Workout $workout): WorkoutResource

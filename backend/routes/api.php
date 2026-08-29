@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\ExerciseController;
+use App\Http\Controllers\Api\V1\FeedController;
 use App\Http\Controllers\Api\V1\FriendshipController;
 use App\Http\Controllers\Api\V1\UserController;
 use App\Http\Controllers\Api\V1\WorkoutController;
@@ -14,8 +15,8 @@ use Illuminate\Support\Facades\Route;
 | API Routes
 |--------------------------------------------------------------------------
 |
-| Le rotte API sono versionate sotto /api/v1/*. Le rotte relative a feed
-| e notifiche verranno aggiunte nelle fasi successive.
+| Le rotte API sono versionate sotto /api/v1/*. Le rotte relative alle
+| notifiche verranno aggiunte in Fase 7.
 |
 */
 
@@ -62,5 +63,7 @@ Route::prefix('v1')->group(function () {
         Route::post('/workouts/{workout}/exercises/{workoutExercise}/sets', [WorkoutSetController::class, 'store']);
         Route::patch('/workout-sets/{workoutSet}', [WorkoutSetController::class, 'update']);
         Route::delete('/workout-sets/{workoutSet}', [WorkoutSetController::class, 'destroy']);
+
+        Route::get('/feed', [FeedController::class, 'index']);
     });
 });
