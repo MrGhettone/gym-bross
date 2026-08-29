@@ -3,7 +3,7 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ApiError } from '../services/api'
 import { exercisesService } from '../services/exercises.service'
-import { workoutsService, type Workout } from '../services/workouts.service'
+import { workoutsService, type Workout, type WorkoutSet } from '../services/workouts.service'
 import { useAuthStore } from '../stores/auth'
 
 const route = useRoute()
@@ -20,6 +20,10 @@ const addingExercise = ref(false)
 
 const setDrafts = reactive<Record<number, { weight: string; repetitions: string; duration: string; distance: string }>>({})
 const loggingSetFor = ref<number | null>(null)
+
+const editingSetId = ref<number | null>(null)
+const editDraft = reactive({ weight: '', repetitions: '', duration: '', distance: '' })
+const savingEdit = ref(false)
 
 const finishing = ref(false)
 const cancelling = ref(false)
@@ -103,6 +107,37 @@ async function onDeleteSet(setId: number) {
   await load()
 }
 
+function onStartEdit(set: WorkoutSet) {
+  editingSetId.value = set.id
+  editDraft.weight = set.weight ?? ''
+  editDraft.repetitions = set.repetitions?.toString() ?? ''
+  editDraft.duration = set.duration?.toString() ?? ''
+  editDraft.distance = set.distance?.toString() ?? ''
+}
+
+function onCancelEdit() {
+  editingSetId.value = null
+}
+
+async function onSaveEdit(setId: number) {
+  savingEdit.value = true
+  errorMessage.value = ''
+  try {
+    await workoutsService.updateSet(setId, {
+      weight: editDraft.weight ? Number(editDraft.weight) : undefined,
+      repetitions: editDraft.repetitions ? Number(editDraft.repetitions) : undefined,
+      duration: editDraft.duration ? Number(editDraft.duration) : undefined,
+      distance: editDraft.distance ? Number(editDraft.distance) : undefined,
+    })
+    editingSetId.value = null
+    await load()
+  } catch (error) {
+    errorMessage.value = error instanceof ApiError ? error.message : 'Impossibile contattare il backend'
+  } finally {
+    savingEdit.value = false
+  }
+}
+
 async function onFinish() {
   finishing.value = true
   try {
@@ -141,12 +176,25 @@ async function onCancel() {
 
       <ul class="sets">
         <li v-for="s in we.sets" :key="s.id" class="set">
-          <span>#{{ s.set_number }}</span>
-          <span v-if="s.weight">{{ s.weight }} kg</span>
-          <span v-if="s.repetitions">{{ s.repetitions }} rip</span>
-          <span v-if="s.duration">{{ s.duration }} s</span>
-          <span v-if="s.distance">{{ s.distance }} m</span>
-          <button v-if="canEdit" type="button" class="link" @click="onDeleteSet(s.id)">×</button>
+          <template v-if="editingSetId === s.id">
+            <form class="set-form set-form--edit" @submit.prevent="onSaveEdit(s.id)">
+              <input v-model="editDraft.weight" type="number" step="0.01" placeholder="kg" />
+              <input v-model="editDraft.repetitions" type="number" placeholder="rip" />
+              <input v-model="editDraft.duration" type="number" placeholder="sec" />
+              <input v-model="editDraft.distance" type="number" step="0.01" placeholder="m" />
+              <button type="submit" :disabled="savingEdit">✓</button>
+              <button type="button" class="link" @click="onCancelEdit">✕</button>
+            </form>
+          </template>
+          <template v-else>
+            <span>#{{ s.set_number }}</span>
+            <span v-if="s.weight">{{ s.weight }} kg</span>
+            <span v-if="s.repetitions">{{ s.repetitions }} rip</span>
+            <span v-if="s.duration">{{ s.duration }} s</span>
+            <span v-if="s.distance">{{ s.distance }} m</span>
+            <button v-if="canEdit" type="button" class="link" @click="onStartEdit(s)">Modifica</button>
+            <button v-if="canEdit" type="button" class="link" @click="onDeleteSet(s.id)">×</button>
+          </template>
         </li>
       </ul>
 
@@ -246,12 +294,20 @@ async function onCancel() {
   .link {
     margin-left: auto;
   }
+
+  .set-form--edit {
+    width: 100%;
+  }
 }
 
 .set-form {
   display: grid;
   grid-template-columns: repeat(4, 1fr) auto;
   gap: 0.375rem;
+
+  &--edit {
+    grid-template-columns: repeat(4, 1fr) auto auto;
+  }
 
   input {
     font: inherit;

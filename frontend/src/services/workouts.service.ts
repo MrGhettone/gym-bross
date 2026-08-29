@@ -85,6 +85,11 @@ export const workoutsService = {
     return response.data
   },
 
+  async updateSet(setId: number, payload: SetPayload): Promise<WorkoutSet> {
+    const response = await api.patch<ApiResponse<WorkoutSet>>(`/workout-sets/${setId}`, payload)
+    return response.data
+  },
+
   async deleteSet(setId: number): Promise<void> {
     await api.delete(`/workout-sets/${setId}`)
   },
