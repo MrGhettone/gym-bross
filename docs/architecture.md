@@ -29,7 +29,7 @@ Gym Bros è composto da due progetti indipendenti che comunicano solo via API RE
 - CORS: origini esplicite da env (`FRONTEND_URL`), `supports_credentials=false` (nessun cookie coinvolto, auth via header `Authorization`).
 - Formato risposta coerente: `{ "data": ... }` per successo, `{ "message": "..." }` per errore (con `errors` per la validazione 422).
 
-## Stato attuale (Fase 6)
+## Stato attuale (Fase 7)
 
 - Scaffolding backend/frontend completato (Fase 1).
 - Autenticazione Sanctum a token Bearer implementata: register/login/logout/me, form Vue mobile-first, route guard lato frontend. Dettagli in [docs/authentication.md](authentication.md).
@@ -37,4 +37,4 @@ Gym Bros è composto da due progetti indipendenti che comunicano solo via API RE
 - Workout implementati: avvio/termina/annulla, esercizi (catalogo condiviso) e serie loggate durante un workout attivo, `WorkoutPolicy`, view Vue mobile-first pensate per il minor numero di tap durante l'allenamento. Dettagli in [docs/api.md](api.md) e [docs/database.md](database.md).
 - Feed implementato: derivato al volo dai workout degli amici accettati (nessuna tabella dedicata), `WorkoutPolicy::view` estesa agli amici per permettere di aprire il dettaglio dal feed. Dettagli in [docs/api.md](api.md).
 - PWA implementata: manifest + Service Worker via `vite-plugin-pwa`, icone multi-risoluzione, nessun caching delle chiamate API. Dettagli in [docs/pwa.md](pwa.md).
-- Notifiche push non ancora implementate.
+- Notifiche push implementate: `laravel-notification-channels/webpush`, service worker custom per `push`/`notificationclick`, notifica agli amici accettati quando qualcuno inizia/termina un workout. Dettagli in [docs/notifications.md](notifications.md).

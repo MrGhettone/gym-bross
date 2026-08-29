@@ -84,18 +84,19 @@ Vincolo applicativo (non esprimibile come unique DB standard su MySQL/MariaDB se
 
 Vincolo applicativo: almeno uno tra `weight`/`repetitions`/`duration`/`distance` deve essere presente (nessun set completamente vuoto).
 
-### `push_subscriptions`
+### `push_subscriptions` ✅
+
+Schema del pacchetto `laravel-notification-channels/webpush` (adottato così com'è invece di ricalcare esattamente lo schema ipotizzato sopra — polimorfico invece di `user_id` diretto, per restare compatibile con le API standard del pacchetto):
 
 | campo | tipo | note |
 |---|---|---|
 | id | bigint PK | |
-| user_id | FK → users | |
-| endpoint | string | |
-| p256dh | string | chiave pubblica subscription |
-| auth_token | string | |
+| subscribable_type / subscribable_id | morph | polimorfico invece di `user_id` diretto (per ora sempre `App\Models\User`) |
+| endpoint | string(1024), ascii, unique | |
+| public_key | string, nullable | equivalente al "p256dh" ipotizzato sopra |
+| auth_token | string, nullable | |
+| content_encoding | string, nullable | sempre `aes128gcm` (rfc8291), impostato dal backend |
 | created_at / updated_at | timestamp | |
-
-Struttura esatta da confermare in base alla libreria Web Push scelta in Fase 7.
 
 ## Convenzioni
 
