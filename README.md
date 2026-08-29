@@ -2,7 +2,7 @@
 
 PWA mobile-first che permette a un gruppo di amici di condividere le proprie attività in palestra: allenamenti, esercizi, serie e un feed sociale, con notifiche push del browser.
 
-Stato del progetto: **Fase 7 — Web Push** in corso (autenticazione, amicizie, workout, feed, PWA e notifiche push implementati). Resta solo il Polish finale (Fase 8).
+Stato del progetto: **Fase 8 — Polish** in corso (tutte le funzionalità principali implementate: autenticazione, amicizie, workout, feed, PWA, notifiche push). Fase 8 senza uno scope fisso — si procede per interventi mirati, vedi log decisioni in [AGENTS.md](./AGENTS.md).
 
 ## Stack
 
@@ -76,4 +76,4 @@ Il progetto viene sviluppato per fasi incrementali (vedi [AGENTS.md](./AGENTS.md
 5. ✅ Feed
 6. ✅ PWA
 7. ✅ Web Push
-8. ⬜ Polish
+8. 🟡 Polish (in corso, senza scope fisso — vedi AGENTS.md)
