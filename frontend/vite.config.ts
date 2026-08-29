@@ -16,10 +16,19 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'favicon.ico', 'apple-touch-icon-180x180.png'],
-      // Precache solo l'app shell (JS/CSS/HTML/icone del build). Nessuna
-      // regola runtimeCaching per /api/*: le chiamate API non passano dalla
-      // cache, sempre rete (coerente con "nessun caching aggressivo dei
-      // dati API" in AGENTS.md/docs/pwa.md).
+      // injectManifest (non generateSW): serve un service worker custom
+      // (src/sw.ts) per gestire gli eventi push/notificationclick (Fase 7).
+      // Precache dell'app shell delegato comunque a workbox
+      // (precacheAndRoute in src/sw.ts). Nessuna regola runtimeCaching per
+      // /api/*: le chiamate API non passano dalla cache, sempre rete
+      // (coerente con "nessun caching aggressivo dei dati API" in
+      // AGENTS.md/docs/pwa.md).
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'sw.ts',
+      injectManifest: {
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,webmanifest}'],
+      },
       manifest: {
         name: 'Gym Bros',
         short_name: 'Gym Bros',

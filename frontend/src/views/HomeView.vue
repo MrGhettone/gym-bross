@@ -2,6 +2,7 @@
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { api, ApiError } from '../services/api'
+import { notificationsService } from '../services/notifications.service'
 import { useAuthStore } from '../stores/auth'
 
 interface PingResponse {
@@ -18,6 +19,11 @@ const backendStatus = ref<'checking' | 'online' | 'offline'>('checking')
 const backendDetail = ref('')
 const loggingOut = ref(false)
 
+const notificationsSupported = notificationsService.isSupported()
+const notificationsEnabled = ref(false)
+const notificationsBusy = ref(false)
+const notificationsError = ref('')
+
 onMounted(async () => {
   try {
     const result = await api.get<PingResponse>('/ping')
@@ -27,7 +33,29 @@ onMounted(async () => {
     backendStatus.value = 'offline'
     backendDetail.value = error instanceof ApiError ? error.message : 'Impossibile contattare il backend'
   }
+
+  if (notificationsSupported) {
+    notificationsEnabled.value = (await notificationsService.getSubscription()) !== null
+  }
 })
+
+async function onToggleNotifications() {
+  notificationsBusy.value = true
+  notificationsError.value = ''
+  try {
+    if (notificationsEnabled.value) {
+      await notificationsService.disable()
+      notificationsEnabled.value = false
+    } else {
+      await notificationsService.enable()
+      notificationsEnabled.value = true
+    }
+  } catch {
+    notificationsError.value = 'Impossibile attivare le notifiche (permesso negato o browser non supportato)'
+  } finally {
+    notificationsBusy.value = false
+  }
+}
 
 async function onLogout() {
   loggingOut.value = true
@@ -54,6 +82,13 @@ async function onLogout() {
       <router-link :to="{ name: 'workouts' }">Allenamenti</router-link>
       <router-link :to="{ name: 'friends' }">Amici</router-link>
     </nav>
+
+    <div v-if="notificationsSupported" class="notifications">
+      <button type="button" :disabled="notificationsBusy" @click="onToggleNotifications">
+        {{ notificationsEnabled ? 'Disattiva notifiche' : 'Attiva notifiche' }}
+      </button>
+      <p v-if="notificationsError" class="error">{{ notificationsError }}</p>
+    </div>
 
     <button type="button" :disabled="loggingOut" @click="onLogout">
       {{ loggingOut ? 'Uscita in corso…' : 'Esci' }}
@@ -83,6 +118,16 @@ async function onLogout() {
   &.checking {
     color: #6b7280;
   }
+}
+
+.notifications {
+  margin-top: 1.5rem;
+}
+
+.error {
+  color: #dc2626;
+  font-size: 0.8125rem;
+  margin: 0.5rem 0 0;
 }
 
 .nav {
