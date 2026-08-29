@@ -2,11 +2,9 @@
 
 namespace App\Http\Controllers\Api\V1;
 
-use App\Enums\FriendshipStatus;
 use App\Enums\WorkoutStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\FeedWorkoutResource;
-use App\Models\Friendship;
 use App\Models\Workout;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -22,16 +20,8 @@ class FeedController extends Controller
      */
     public function index(Request $request): AnonymousResourceCollection
     {
-        $friendIds = Friendship::query()
-            ->where('status', FriendshipStatus::Accepted)
-            ->involvingUser($request->user()->id)
-            ->get()
-            ->map(fn (Friendship $friendship) => $friendship->requester_id === $request->user()->id
-                ? $friendship->addressee_id
-                : $friendship->requester_id);
-
         $workouts = Workout::query()
-            ->whereIn('user_id', $friendIds)
+            ->whereIn('user_id', $request->user()->acceptedFriendIds())
             ->whereIn('status', [WorkoutStatus::Active, WorkoutStatus::Completed])
             ->with('user')
             ->withCount('workoutExercises')

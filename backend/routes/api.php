@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\ExerciseController;
 use App\Http\Controllers\Api\V1\FeedController;
 use App\Http\Controllers\Api\V1\FriendshipController;
+use App\Http\Controllers\Api\V1\PushSubscriptionController;
 use App\Http\Controllers\Api\V1\UserController;
 use App\Http\Controllers\Api\V1\WorkoutController;
 use App\Http\Controllers\Api\V1\WorkoutExerciseController;
@@ -15,8 +16,7 @@ use Illuminate\Support\Facades\Route;
 | API Routes
 |--------------------------------------------------------------------------
 |
-| Le rotte API sono versionate sotto /api/v1/*. Le rotte relative alle
-| notifiche verranno aggiunte in Fase 7.
+| Le rotte API sono versionate sotto /api/v1/*.
 |
 */
 
@@ -65,5 +65,8 @@ Route::prefix('v1')->group(function () {
         Route::delete('/workout-sets/{workoutSet}', [WorkoutSetController::class, 'destroy']);
 
         Route::get('/feed', [FeedController::class, 'index']);
+
+        Route::post('/push-subscriptions', [PushSubscriptionController::class, 'store']);
+        Route::delete('/push-subscriptions', [PushSubscriptionController::class, 'destroy']);
     });
 });

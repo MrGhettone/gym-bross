@@ -6,11 +6,14 @@ use App\Enums\WorkoutStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreWorkoutRequest;
 use App\Http\Resources\WorkoutResource;
+use App\Models\User;
 use App\Models\Workout;
+use App\Notifications\WorkoutActivityNotification;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Notification;
 
 class WorkoutController extends Controller
 {
@@ -30,6 +33,8 @@ class WorkoutController extends Controller
         ]);
         $workout->setRelation('user', $request->user());
 
+        $this->notifyFriends($workout);
+
         return (new WorkoutResource($workout))->response()->setStatusCode(201);
     }
 
@@ -45,6 +50,7 @@ class WorkoutController extends Controller
         Gate::authorize('finish', $workout);
 
         $workout->update(['status' => WorkoutStatus::Completed, 'finished_at' => now()]);
+        $this->notifyFriends($workout);
 
         return new WorkoutResource($workout);
     }
@@ -65,5 +71,20 @@ class WorkoutController extends Controller
         $workout->delete();
 
         return response()->json(null, 204);
+    }
+
+    /**
+     * Notifica via Web Push gli amici accettati del proprietario del
+     * workout (eventi MVP: inizio/fine allenamento, docs/notifications.md).
+     */
+    private function notifyFriends(Workout $workout): void
+    {
+        $workout->loadMissing('user');
+
+        $friends = User::query()->whereIn('id', $workout->user->acceptedFriendIds())->get();
+
+        if ($friends->isNotEmpty()) {
+            Notification::send($friends, new WorkoutActivityNotification($workout));
+        }
     }
 }
