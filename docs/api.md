@@ -18,6 +18,7 @@
 /api/v1/workouts/*       Fase 4 ✅
 /api/v1/exercises/*      Fase 4 ✅
 /api/v1/workout-sets/*   Fase 4 ✅ (update/delete di una singola serie)
+/api/v1/feed             Fase 5 ✅
 /api/v1/notifications/*  Fase 7
 ```
 
@@ -93,7 +94,7 @@ Richiede `auth:sanctum`. Avvia un nuovo workout (`status: active`, `started_at: 
 
 ### `GET /api/v1/workouts/{workout}`
 
-Richiede `auth:sanctum`, solo il proprietario (altrimenti `403`). Risposta `200` con `WorkoutResource` incluso `exercises[].sets`.
+Richiede `auth:sanctum`, il proprietario oppure un amico accettato del proprietario (altrimenti `403` — è quello che alimenta il feed, Fase 5). Risposta `200` con `WorkoutResource` incluso `user` (`PublicUserResource`) e `exercises[].sets`.
 
 ### `PATCH /api/v1/workouts/{workout}/finish` · `PATCH /api/v1/workouts/{workout}/cancel`
 
@@ -118,3 +119,7 @@ Richiede `auth:sanctum`, solo il proprietario e solo se il workout è `active`. 
 ### `PATCH /api/v1/workout-sets/{workoutSet}` · `DELETE /api/v1/workout-sets/{workoutSet}`
 
 Richiede `auth:sanctum`; autorizzazione risolta risalendo a `workoutSet.workoutExercise.workout` (stesse regole di `manageExercises`: proprietario, workout `active`).
+
+### `GET /api/v1/feed`
+
+Richiede `auth:sanctum`. Nessuna tabella dedicata: derivato al volo dai workout `active`/`completed` (mai `cancelled`, mai i propri) degli amici con relazione `accepted`, più recenti prima, limitato a 50 risultati (nessuna paginazione in questa fase). Risposta `200` con array di `FeedWorkoutResource` (`id`, `status`, `started_at`, `finished_at`, `exercises_count`, `user`: `PublicUserResource`).
