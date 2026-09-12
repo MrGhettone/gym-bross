@@ -64,7 +64,11 @@ SESSION_DRIVER=database
 SESSION_DOMAIN=null
 CACHE_STORE=database
 QUEUE_CONNECTION=database
+
+LOG_CHANNEL=stderr
 ```
+
+`LOG_CHANNEL=stderr` è importante quanto le altre: senza, Laravel scrive i log (eccezioni, `Log::error()`, ...) su `storage/logs/laravel.log`, un file su filesystem effimero che **non compare nel pannello Deploy Logs di Railway** — di fatto invisibile. Con `stderr`, i log vanno sullo stream che Railway effettivamente mostra.
 
 `APP_KEY` non può essere generata a runtime su Railway: il filesystem è effimero e `php artisan key:generate` scriverebbe su un `.env` che non persiste tra i deploy. Generarla **una volta in locale** e incollarla come variabile:
 
