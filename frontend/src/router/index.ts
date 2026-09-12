@@ -2,9 +2,9 @@ import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import FeedView from '../views/FeedView.vue'
 import FriendsView from '../views/FriendsView.vue'
-import HomeView from '../views/HomeView.vue'
 import LoginView from '../views/LoginView.vue'
 import RegisterView from '../views/RegisterView.vue'
+import SettingsView from '../views/SettingsView.vue'
 import WorkoutDetailView from '../views/WorkoutDetailView.vue'
 import WorkoutsView from '../views/WorkoutsView.vue'
 
@@ -13,9 +13,7 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      name: 'home',
-      component: HomeView,
-      meta: { requiresAuth: true },
+      redirect: { name: 'feed' },
     },
     {
       path: '/friends',
@@ -39,6 +37,12 @@ const router = createRouter({
       path: '/workouts/:id',
       name: 'workout-detail',
       component: WorkoutDetailView,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/settings',
+      name: 'settings',
+      component: SettingsView,
       meta: { requiresAuth: true },
     },
     {
@@ -68,7 +72,7 @@ router.beforeEach(async (to) => {
   }
 
   if (to.meta.guestOnly && auth.user) {
-    return { name: 'home' }
+    return { name: 'feed' }
   }
 })
 
