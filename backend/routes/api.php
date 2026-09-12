@@ -64,7 +64,8 @@ Route::prefix('v1')->group(function () {
         Route::patch('/workout-sets/{workoutSet}', [WorkoutSetController::class, 'update']);
         Route::delete('/workout-sets/{workoutSet}', [WorkoutSetController::class, 'destroy']);
 
-        Route::get('/feed', [FeedController::class, 'index']);
+        Route::get('/feed/summary', [FeedController::class, 'summary']);
+        Route::get('/feed/day', [FeedController::class, 'day']);
 
         Route::post('/push-subscriptions', [PushSubscriptionController::class, 'store']);
         Route::delete('/push-subscriptions', [PushSubscriptionController::class, 'destroy']);
