@@ -54,8 +54,11 @@ class Friendship extends Model
     public function scopeBetween(Builder $query, int $userIdA, int $userIdB): Builder
     {
         return $query->where(function (Builder $query) use ($userIdA, $userIdB) {
-            $query->where(['requester_id' => $userIdA, 'addressee_id' => $userIdB])
-                ->orWhere(['requester_id' => $userIdB, 'addressee_id' => $userIdA]);
+            $query->where(function (Builder $query) use ($userIdA, $userIdB) {
+                $query->where('requester_id', $userIdA)->where('addressee_id', $userIdB);
+            })->orWhere(function (Builder $query) use ($userIdA, $userIdB) {
+                $query->where('requester_id', $userIdB)->where('addressee_id', $userIdA);
+            });
         });
     }
 }
