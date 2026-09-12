@@ -18,7 +18,8 @@
 /api/v1/workouts/*       Fase 4 ✅
 /api/v1/exercises/*      Fase 4 ✅
 /api/v1/workout-sets/*   Fase 4 ✅ (update/delete di una singola serie)
-/api/v1/feed             Fase 5 ✅
+/api/v1/feed/summary     Fase 5 ✅ (calendario)
+/api/v1/feed/day         Fase 5 ✅ (dettaglio giornaliero/Gantt)
 /api/v1/notifications/*  Fase 7
 ```
 
@@ -120,6 +121,10 @@ Richiede `auth:sanctum`, solo il proprietario e solo se il workout è `active`. 
 
 Richiede `auth:sanctum`; autorizzazione risolta risalendo a `workoutSet.workoutExercise.workout` (stesse regole di `manageExercises`: proprietario, workout `active`).
 
-### `GET /api/v1/feed`
+### `GET /api/v1/feed/summary`
 
-Richiede `auth:sanctum`. Nessuna tabella dedicata: derivato al volo dai workout `active`/`completed` (mai `cancelled`, mai i propri) degli amici con relazione `accepted`, più recenti prima, limitato a 50 risultati (nessuna paginazione in questa fase). Risposta `200` con array di `FeedWorkoutResource` (`id`, `status`, `started_at`, `finished_at`, `exercises_count`, `user`: `PublicUserResource`).
+Richiede `auth:sanctum`. Query param opzionale `month` (formato `Y-m`, default il mese corrente). Conteggio dei workout `active`/`completed` (mai `cancelled`) per giorno, per l'utente stesso **e** gli amici con relazione `accepted` — a differenza della vecchia lista piatta, qui sono inclusi anche i propri workout. Risposta `200`: `{"data": [{"date": "2026-09-10", "count": 2}, ...]}`, un elemento per ogni giorno del mese con almeno un'attività (nessuna voce per i giorni senza attività).
+
+### `GET /api/v1/feed/day`
+
+Richiede `auth:sanctum`. Query param obbligatorio `date` (formato `Y-m-d`), altrimenti `422`. Stessa fonte/filtri di `summary` ma per un singolo giorno, ordinati per `started_at` crescente. Risposta `200` con array di `FeedWorkoutResource` (`id`, `status`, `started_at`, `finished_at`, `exercises_count`, `user`: `PublicUserResource`) — usato dal frontend per il Gantt giornaliero del feed.
