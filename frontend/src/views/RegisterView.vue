@@ -1,44 +1,48 @@
-<script setup lang="ts">
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+<script lang="ts">
+import { defineComponent } from 'vue'
 import { ApiError } from '../services/api'
 import { useAuthStore } from '../stores/auth'
 
-const router = useRouter()
-const auth = useAuthStore()
-
-const username = ref('')
-const email = ref('')
-const password = ref('')
-const passwordConfirmation = ref('')
-const submitting = ref(false)
-const errorMessage = ref('')
-const fieldErrors = ref<Record<string, string[]>>({})
-
-async function onSubmit() {
-  submitting.value = true
-  errorMessage.value = ''
-  fieldErrors.value = {}
-
-  try {
-    await auth.register({
-      username: username.value,
-      email: email.value,
-      password: password.value,
-      password_confirmation: passwordConfirmation.value,
-    })
-    await router.push({ name: 'home' })
-  } catch (error) {
-    if (error instanceof ApiError) {
-      errorMessage.value = error.body.message
-      fieldErrors.value = error.body.errors ?? {}
-    } else {
-      errorMessage.value = 'Impossibile contattare il backend'
+export default defineComponent({
+  data() {
+    return {
+      auth: useAuthStore(),
+      username: '',
+      email: '',
+      password: '',
+      passwordConfirmation: '',
+      submitting: false,
+      errorMessage: '',
+      fieldErrors: {} as Record<string, string[]>,
     }
-  } finally {
-    submitting.value = false
-  }
-}
+  },
+  methods: {
+    async onSubmit() {
+      this.submitting = true
+      this.errorMessage = ''
+      this.fieldErrors = {}
+
+      try {
+        await this.auth.register({
+          username: this.username,
+          email: this.email,
+          password: this.password,
+          password_confirmation: this.passwordConfirmation,
+        })
+        await this.$router.push({ name: 'feed' })
+      } catch (error) {
+        if (error instanceof ApiError) {
+          this.errorMessage = error.body.message
+          this.fieldErrors = error.body.errors ?? {}
+        } else {
+          this.errorMessage = 'Impossibile contattare il backend'
+        }
+      } finally {
+        this.submitting = false
+      }
+    },
+  },
+})
 </script>
 
 <template>

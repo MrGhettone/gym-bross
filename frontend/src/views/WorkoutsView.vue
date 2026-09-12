@@ -1,45 +1,45 @@
-<script setup lang="ts">
-import { onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
+<script lang="ts">
+import { defineComponent } from 'vue'
 import { ApiError } from '../services/api'
 import { workoutsService, type Workout } from '../services/workouts.service'
 
-const router = useRouter()
-
-const workouts = ref<Workout[]>([])
-const status = ref<'loading' | 'ready'>('loading')
-const starting = ref(false)
-const errorMessage = ref('')
-
-const active = ref<Workout | null>(null)
-
-onMounted(async () => {
-  await load()
+export default defineComponent({
+  data() {
+    return {
+      workouts: [] as Workout[],
+      status: 'loading' as 'loading' | 'ready',
+      starting: false,
+      errorMessage: '',
+      active: null as Workout | null,
+    }
+  },
+  async mounted() {
+    await this.load()
+  },
+  methods: {
+    async load() {
+      this.status = 'loading'
+      this.workouts = await workoutsService.list()
+      this.active = this.workouts.find((w) => w.status === 'active') ?? null
+      this.status = 'ready'
+    },
+    async onStart() {
+      this.starting = true
+      this.errorMessage = ''
+      try {
+        const workout = await workoutsService.start()
+        await this.$router.push({ name: 'workout-detail', params: { id: workout.id } })
+      } catch (error) {
+        this.errorMessage = error instanceof ApiError ? error.message : 'Impossibile contattare il backend'
+      } finally {
+        this.starting = false
+      }
+    },
+    statusLabel(workout: Workout): string {
+      return { active: 'In corso', completed: 'Completato', cancelled: 'Annullato' }[workout.status]
+    },
+  },
 })
-
-async function load() {
-  status.value = 'loading'
-  workouts.value = await workoutsService.list()
-  active.value = workouts.value.find((w) => w.status === 'active') ?? null
-  status.value = 'ready'
-}
-
-async function onStart() {
-  starting.value = true
-  errorMessage.value = ''
-  try {
-    const workout = await workoutsService.start()
-    await router.push({ name: 'workout-detail', params: { id: workout.id } })
-  } catch (error) {
-    errorMessage.value = error instanceof ApiError ? error.message : 'Impossibile contattare il backend'
-  } finally {
-    starting.value = false
-  }
-}
-
-function statusLabel(workout: Workout): string {
-  return { active: 'In corso', completed: 'Completato', cancelled: 'Annullato' }[workout.status]
-}
 </script>
 
 <template>

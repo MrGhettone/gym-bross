@@ -1,162 +1,165 @@
-<script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+<script lang="ts">
+import { defineComponent } from 'vue'
 import { ApiError } from '../services/api'
 import { exercisesService } from '../services/exercises.service'
 import { workoutsService, type Workout, type WorkoutSet } from '../services/workouts.service'
 import { useAuthStore } from '../stores/auth'
 
-const route = useRoute()
-const router = useRouter()
-const auth = useAuthStore()
+type SetDraft = { weight: string; repetitions: string; duration: string; distance: string }
 
-const workoutId = Number(route.params.id)
-const workout = ref<Workout | null>(null)
-const loading = ref(true)
-const errorMessage = ref('')
-
-const newExerciseName = ref('')
-const addingExercise = ref(false)
-
-const setDrafts = reactive<Record<number, { weight: string; repetitions: string; duration: string; distance: string }>>({})
-const loggingSetFor = ref<number | null>(null)
-
-const editingSetId = ref<number | null>(null)
-const editDraft = reactive({ weight: '', repetitions: '', duration: '', distance: '' })
-const savingEdit = ref(false)
-
-const finishing = ref(false)
-const cancelling = ref(false)
-
-const isActive = computed(() => workout.value?.status === 'active')
-const isOwner = computed(() => workout.value?.user?.id === auth.user?.id)
-const canEdit = computed(() => isActive.value && isOwner.value)
-
-onMounted(load)
-
-async function load() {
-  loading.value = true
-  workout.value = await workoutsService.show(workoutId)
-  for (const we of workout.value.exercises ?? []) {
-    setDrafts[we.id] ??= { weight: '', repetitions: '', duration: '', distance: '' }
-  }
-  loading.value = false
-}
-
-async function onAddExercise() {
-  const name = newExerciseName.value.trim()
-  if (!name) return
-
-  addingExercise.value = true
-  errorMessage.value = ''
-  try {
-    let exercise
-    try {
-      exercise = await exercisesService.create(name)
-    } catch (error) {
-      if (error instanceof ApiError && error.status === 422) {
-        const matches = await exercisesService.list(name)
-        const exact = matches.find((e) => e.name.toLowerCase() === name.toLowerCase())
-        if (!exact) throw error
-        exercise = exact
-      } else {
-        throw error
-      }
+export default defineComponent({
+  data() {
+    return {
+      auth: useAuthStore(),
+      workoutId: 0,
+      workout: null as Workout | null,
+      loading: true,
+      errorMessage: '',
+      newExerciseName: '',
+      addingExercise: false,
+      setDrafts: {} as Record<number, SetDraft>,
+      loggingSetFor: null as number | null,
+      editingSetId: null as number | null,
+      editDraft: { weight: '', repetitions: '', duration: '', distance: '' } as SetDraft,
+      savingEdit: false,
+      finishing: false,
+      cancelling: false,
     }
+  },
+  computed: {
+    isActive(): boolean {
+      return this.workout?.status === 'active'
+    },
+    isOwner(): boolean {
+      return this.workout?.user?.id === this.auth.user?.id
+    },
+    canEdit(): boolean {
+      return this.isActive && this.isOwner
+    },
+  },
+  created() {
+    this.workoutId = Number(this.$route.params.id)
+  },
+  mounted() {
+    this.load()
+  },
+  methods: {
+    async load() {
+      this.loading = true
+      this.workout = await workoutsService.show(this.workoutId)
+      for (const we of this.workout.exercises ?? []) {
+        this.setDrafts[we.id] ??= { weight: '', repetitions: '', duration: '', distance: '' }
+      }
+      this.loading = false
+    },
+    async onAddExercise() {
+      const name = this.newExerciseName.trim()
+      if (!name) return
 
-    await workoutsService.addExercise(workoutId, exercise.id)
-    newExerciseName.value = ''
-    await load()
-  } catch (error) {
-    errorMessage.value = error instanceof ApiError ? error.message : 'Impossibile contattare il backend'
-  } finally {
-    addingExercise.value = false
-  }
-}
+      this.addingExercise = true
+      this.errorMessage = ''
+      try {
+        let exercise
+        try {
+          exercise = await exercisesService.create(name)
+        } catch (error) {
+          if (error instanceof ApiError && error.status === 422) {
+            const matches = await exercisesService.list(name)
+            const exact = matches.find((e) => e.name.toLowerCase() === name.toLowerCase())
+            if (!exact) throw error
+            exercise = exact
+          } else {
+            throw error
+          }
+        }
 
-async function onRemoveExercise(workoutExerciseId: number) {
-  await workoutsService.removeExercise(workoutId, workoutExerciseId)
-  await load()
-}
-
-async function onLogSet(workoutExerciseId: number) {
-  const draft = setDrafts[workoutExerciseId]
-  loggingSetFor.value = workoutExerciseId
-  errorMessage.value = ''
-  try {
-    await workoutsService.logSet(workoutId, workoutExerciseId, {
-      weight: draft.weight ? Number(draft.weight) : undefined,
-      repetitions: draft.repetitions ? Number(draft.repetitions) : undefined,
-      duration: draft.duration ? Number(draft.duration) : undefined,
-      distance: draft.distance ? Number(draft.distance) : undefined,
-    })
-    draft.weight = ''
-    draft.repetitions = ''
-    draft.duration = ''
-    draft.distance = ''
-    await load()
-  } catch (error) {
-    errorMessage.value = error instanceof ApiError ? error.message : 'Impossibile contattare il backend'
-  } finally {
-    loggingSetFor.value = null
-  }
-}
-
-async function onDeleteSet(setId: number) {
-  await workoutsService.deleteSet(setId)
-  await load()
-}
-
-function onStartEdit(set: WorkoutSet) {
-  editingSetId.value = set.id
-  editDraft.weight = set.weight ?? ''
-  editDraft.repetitions = set.repetitions?.toString() ?? ''
-  editDraft.duration = set.duration?.toString() ?? ''
-  editDraft.distance = set.distance?.toString() ?? ''
-}
-
-function onCancelEdit() {
-  editingSetId.value = null
-}
-
-async function onSaveEdit(setId: number) {
-  savingEdit.value = true
-  errorMessage.value = ''
-  try {
-    await workoutsService.updateSet(setId, {
-      weight: editDraft.weight ? Number(editDraft.weight) : undefined,
-      repetitions: editDraft.repetitions ? Number(editDraft.repetitions) : undefined,
-      duration: editDraft.duration ? Number(editDraft.duration) : undefined,
-      distance: editDraft.distance ? Number(editDraft.distance) : undefined,
-    })
-    editingSetId.value = null
-    await load()
-  } catch (error) {
-    errorMessage.value = error instanceof ApiError ? error.message : 'Impossibile contattare il backend'
-  } finally {
-    savingEdit.value = false
-  }
-}
-
-async function onFinish() {
-  finishing.value = true
-  try {
-    await workoutsService.finish(workoutId)
-    await router.push({ name: 'workouts' })
-  } finally {
-    finishing.value = false
-  }
-}
-
-async function onCancel() {
-  cancelling.value = true
-  try {
-    await workoutsService.cancel(workoutId)
-    await router.push({ name: 'workouts' })
-  } finally {
-    cancelling.value = false
-  }
-}
+        await workoutsService.addExercise(this.workoutId, exercise.id)
+        this.newExerciseName = ''
+        await this.load()
+      } catch (error) {
+        this.errorMessage = error instanceof ApiError ? error.message : 'Impossibile contattare il backend'
+      } finally {
+        this.addingExercise = false
+      }
+    },
+    async onRemoveExercise(workoutExerciseId: number) {
+      await workoutsService.removeExercise(this.workoutId, workoutExerciseId)
+      await this.load()
+    },
+    async onLogSet(workoutExerciseId: number) {
+      const draft = this.setDrafts[workoutExerciseId]
+      this.loggingSetFor = workoutExerciseId
+      this.errorMessage = ''
+      try {
+        await workoutsService.logSet(this.workoutId, workoutExerciseId, {
+          weight: draft.weight ? Number(draft.weight) : undefined,
+          repetitions: draft.repetitions ? Number(draft.repetitions) : undefined,
+          duration: draft.duration ? Number(draft.duration) : undefined,
+          distance: draft.distance ? Number(draft.distance) : undefined,
+        })
+        draft.weight = ''
+        draft.repetitions = ''
+        draft.duration = ''
+        draft.distance = ''
+        await this.load()
+      } catch (error) {
+        this.errorMessage = error instanceof ApiError ? error.message : 'Impossibile contattare il backend'
+      } finally {
+        this.loggingSetFor = null
+      }
+    },
+    async onDeleteSet(setId: number) {
+      await workoutsService.deleteSet(setId)
+      await this.load()
+    },
+    onStartEdit(set: WorkoutSet) {
+      this.editingSetId = set.id
+      this.editDraft.weight = set.weight ?? ''
+      this.editDraft.repetitions = set.repetitions?.toString() ?? ''
+      this.editDraft.duration = set.duration?.toString() ?? ''
+      this.editDraft.distance = set.distance?.toString() ?? ''
+    },
+    onCancelEdit() {
+      this.editingSetId = null
+    },
+    async onSaveEdit(setId: number) {
+      this.savingEdit = true
+      this.errorMessage = ''
+      try {
+        await workoutsService.updateSet(setId, {
+          weight: this.editDraft.weight ? Number(this.editDraft.weight) : undefined,
+          repetitions: this.editDraft.repetitions ? Number(this.editDraft.repetitions) : undefined,
+          duration: this.editDraft.duration ? Number(this.editDraft.duration) : undefined,
+          distance: this.editDraft.distance ? Number(this.editDraft.distance) : undefined,
+        })
+        this.editingSetId = null
+        await this.load()
+      } catch (error) {
+        this.errorMessage = error instanceof ApiError ? error.message : 'Impossibile contattare il backend'
+      } finally {
+        this.savingEdit = false
+      }
+    },
+    async onFinish() {
+      this.finishing = true
+      try {
+        await workoutsService.finish(this.workoutId)
+        await this.$router.push({ name: 'workouts' })
+      } finally {
+        this.finishing = false
+      }
+    },
+    async onCancel() {
+      this.cancelling = true
+      try {
+        await workoutsService.cancel(this.workoutId)
+        await this.$router.push({ name: 'workouts' })
+      } finally {
+        this.cancelling = false
+      }
+    },
+  },
+})
 </script>
 
 <template>

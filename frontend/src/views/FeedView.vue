@@ -1,18 +1,24 @@
-<script setup lang="ts">
-import { onMounted, ref } from 'vue'
+<script lang="ts">
+import { defineComponent } from 'vue'
 import { feedService, type FeedWorkout } from '../services/feed.service'
 
-const items = ref<FeedWorkout[]>([])
-const status = ref<'loading' | 'ready'>('loading')
-
-onMounted(async () => {
-  items.value = await feedService.list()
-  status.value = 'ready'
+export default defineComponent({
+  data() {
+    return {
+      items: [] as FeedWorkout[],
+      status: 'loading' as 'loading' | 'ready',
+    }
+  },
+  async mounted() {
+    this.items = await feedService.list()
+    this.status = 'ready'
+  },
+  methods: {
+    statusLabel(item: FeedWorkout): string {
+      return item.status === 'active' ? 'sta allenandosi' : 'ha completato un allenamento'
+    },
+  },
 })
-
-function statusLabel(item: FeedWorkout): string {
-  return item.status === 'active' ? 'sta allenandosi' : 'ha completato un allenamento'
-}
 </script>
 
 <template>

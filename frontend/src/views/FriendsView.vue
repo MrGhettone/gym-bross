@@ -1,41 +1,45 @@
-<script setup lang="ts">
-import { onMounted, ref } from 'vue'
+<script lang="ts">
+import { defineComponent } from 'vue'
 import { ApiError } from '../services/api'
 import { useFriendsStore } from '../stores/friends'
 
-const friends = useFriendsStore()
+export default defineComponent({
+  data() {
+    return {
+      friends: useFriendsStore(),
+      username: '',
+      sending: false,
+      errorMessage: '',
+      pendingActionId: null as number | null,
+    }
+  },
+  mounted() {
+    this.friends.fetchAll()
+  },
+  methods: {
+    async onSendRequest() {
+      this.sending = true
+      this.errorMessage = ''
 
-const username = ref('')
-const sending = ref(false)
-const errorMessage = ref('')
-const pendingActionId = ref<number | null>(null)
-
-onMounted(() => {
-  friends.fetchAll()
+      try {
+        await this.friends.sendRequest(this.username)
+        this.username = ''
+      } catch (error) {
+        this.errorMessage = error instanceof ApiError ? error.message : 'Impossibile contattare il backend'
+      } finally {
+        this.sending = false
+      }
+    },
+    async runAction(id: number, action: (id: number) => Promise<void>) {
+      this.pendingActionId = id
+      try {
+        await action(id)
+      } finally {
+        this.pendingActionId = null
+      }
+    },
+  },
 })
-
-async function onSendRequest() {
-  sending.value = true
-  errorMessage.value = ''
-
-  try {
-    await friends.sendRequest(username.value)
-    username.value = ''
-  } catch (error) {
-    errorMessage.value = error instanceof ApiError ? error.message : 'Impossibile contattare il backend'
-  } finally {
-    sending.value = false
-  }
-}
-
-async function runAction(id: number, action: (id: number) => Promise<void>) {
-  pendingActionId.value = id
-  try {
-    await action(id)
-  } finally {
-    pendingActionId.value = null
-  }
-}
 </script>
 
 <template>

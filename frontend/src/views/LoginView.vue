@@ -1,31 +1,35 @@
-<script setup lang="ts">
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+<script lang="ts">
+import { defineComponent } from 'vue'
 import { ApiError } from '../services/api'
 import { useAuthStore } from '../stores/auth'
 
-const router = useRouter()
-const auth = useAuthStore()
+export default defineComponent({
+  data() {
+    return {
+      auth: useAuthStore(),
+      email: '',
+      password: '',
+      submitting: false,
+      errorMessage: '',
+    }
+  },
+  methods: {
+    async onSubmit() {
+      this.submitting = true
+      this.errorMessage = ''
 
-const email = ref('')
-const password = ref('')
-const submitting = ref(false)
-const errorMessage = ref('')
-
-async function onSubmit() {
-  submitting.value = true
-  errorMessage.value = ''
-
-  try {
-    await auth.login({ email: email.value, password: password.value })
-    await router.push({ name: 'home' })
-  } catch (error) {
-    errorMessage.value =
-      error instanceof ApiError ? error.body.message : 'Impossibile contattare il backend'
-  } finally {
-    submitting.value = false
-  }
-}
+      try {
+        await this.auth.login({ email: this.email, password: this.password })
+        await this.$router.push({ name: 'feed' })
+      } catch (error) {
+        this.errorMessage =
+          error instanceof ApiError ? error.body.message : 'Impossibile contattare il backend'
+      } finally {
+        this.submitting = false
+      }
+    },
+  },
+})
 </script>
 
 <template>
