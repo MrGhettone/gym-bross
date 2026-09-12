@@ -13,7 +13,9 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
+use Throwable;
 
 class WorkoutController extends Controller
 {
@@ -76,6 +78,12 @@ class WorkoutController extends Controller
     /**
      * Notifica via Web Push gli amici accettati del proprietario del
      * workout (eventi MVP: inizio/fine allenamento, docs/notifications.md).
+     *
+     * Invio sincrono (non in coda, vedi docs/notifications.md): un errore
+     * nella consegna (VAPID mal configurato, subscription scaduta, servizio
+     * push irraggiungibile, ...) non deve mai far fallire l'azione
+     * principale dell'utente (avviare/terminare il workout e' gia' stato
+     * salvato) — per questo l'eccezione viene loggata, mai rilanciata.
      */
     private function notifyFriends(Workout $workout): void
     {
@@ -83,8 +91,17 @@ class WorkoutController extends Controller
 
         $friends = User::query()->whereIn('id', $workout->user->acceptedFriendIds())->get();
 
-        if ($friends->isNotEmpty()) {
+        if ($friends->isEmpty()) {
+            return;
+        }
+
+        try {
             Notification::send($friends, new WorkoutActivityNotification($workout));
+        } catch (Throwable $exception) {
+            Log::error('Invio notifica workout fallito', [
+                'workout_id' => $workout->id,
+                'exception' => $exception->getMessage(),
+            ]);
         }
     }
 }

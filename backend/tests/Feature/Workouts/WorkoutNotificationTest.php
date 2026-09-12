@@ -58,4 +58,26 @@ class WorkoutNotificationTest extends TestCase
 
         Notification::assertNothingSent();
     }
+
+    /**
+     * Regressione reale in produzione: un fallimento nell'invio della
+     * notifica (es. VAPID mal configurato) faceva rispondere 500 anche se
+     * il workout era gia' stato salvato. L'azione dell'utente non deve mai
+     * dipendere dal successo di un effetto collaterale come notificare gli
+     * amici.
+     */
+    public function test_a_notification_delivery_failure_does_not_break_starting_a_workout(): void
+    {
+        Notification::shouldReceive('send')->once()->andThrow(new \RuntimeException('push service down'));
+
+        $user = User::factory()->create();
+        $friend = User::factory()->create();
+        Friendship::factory()->accepted()->create(['requester_id' => $user->id, 'addressee_id' => $friend->id]);
+
+        Sanctum::actingAs($user);
+        $response = $this->postJson('/api/v1/workouts');
+
+        $response->assertCreated();
+        $this->assertDatabaseHas('workouts', ['user_id' => $user->id]);
+    }
 }
