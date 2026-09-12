@@ -7,7 +7,7 @@ export default {}
     <router-link
       :to="{ name: 'feed' }"
       class="bottom-nav__item"
-      :class="{ 'bottom-nav__item--active': $route.name === 'feed' }"
+      :class="{ 'bottom-nav__item--active': $route.name === 'feed' || $route.name === 'feed-day' }"
     >
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path

@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+import FeedDayView from '../views/FeedDayView.vue'
 import FeedView from '../views/FeedView.vue'
 import FriendsView from '../views/FriendsView.vue'
 import LoginView from '../views/LoginView.vue'
@@ -25,6 +26,12 @@ const router = createRouter({
       path: '/feed',
       name: 'feed',
       component: FeedView,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/feed/:date',
+      name: 'feed-day',
+      component: FeedDayView,
       meta: { requiresAuth: true },
     },
     {

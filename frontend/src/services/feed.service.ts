@@ -11,9 +11,22 @@ export interface FeedWorkout {
   user: PublicUser
 }
 
+export interface FeedDaySummary {
+  date: string
+  count: number
+}
+
 export const feedService = {
-  async list(): Promise<FeedWorkout[]> {
-    const response = await api.get<ApiResponse<FeedWorkout[]>>('/feed')
+  /** @param month formato YYYY-MM, default il mese corrente lato backend */
+  async summary(month?: string): Promise<FeedDaySummary[]> {
+    const query = month ? `?month=${month}` : ''
+    const response = await api.get<ApiResponse<FeedDaySummary[]>>(`/feed/summary${query}`)
+    return response.data
+  },
+
+  /** @param date formato YYYY-MM-DD */
+  async day(date: string): Promise<FeedWorkout[]> {
+    const response = await api.get<ApiResponse<FeedWorkout[]>>(`/feed/day?date=${date}`)
     return response.data
   },
 }
