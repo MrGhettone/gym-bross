@@ -63,15 +63,11 @@ p {
 }
 
 // Contenitore montato da Vue (index.html #app): shell a tutta altezza,
-// pensato mobile-first (le view riempiono lo schermo su mobile).
-// padding-top: su alcuni telefoni (es. iPhone con notch/Dynamic Island) la
-// fascia in alto e' coperta dalla fotocamera; env(safe-area-inset-top) da
-// solo non basta come margine visivo (richiede anche viewport-fit=cover,
-// gia' impostato in index.html), quindi si garantisce comunque un minimo di
-// 100px anche sui telefoni senza notch.
+// pensato mobile-first (le view riempiono lo schermo su mobile). Il margine
+// per fotocamera/notch (es. iPhone) e' gestito da AppHeader.vue, che occupa
+// gia' quello spazio con logo/nome invece di lasciarlo vuoto.
 #app {
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
-  padding-top: max(100px, env(safe-area-inset-top));
 }

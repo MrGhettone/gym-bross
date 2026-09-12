@@ -1,14 +1,16 @@
 <script lang="ts">
 import { defineComponent } from 'vue'
+import AppHeader from './components/AppHeader.vue'
 import BottomNav from './components/BottomNav.vue'
 
 export default defineComponent({
-  components: { BottomNav },
+  components: { AppHeader, BottomNav },
 })
 </script>
 
 <template>
   <div class="app-root">
+    <AppHeader />
     <div class="app-shell" :class="{ 'app-shell--with-nav': $route.meta.requiresAuth }">
       <router-view />
     </div>
