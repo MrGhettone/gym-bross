@@ -1,5 +1,5 @@
 import { fileURLToPath, URL } from 'node:url'
-import { defineConfig } from 'vite'
+import { defineConfig, type Plugin } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { VitePWA } from 'vite-plugin-pwa'
 
@@ -9,10 +9,46 @@ const mixinsPath = fileURLToPath(
   new URL('./src/styles/mixins.scss', import.meta.url),
 ).replace(/\\/g, '/')
 
+/**
+ * Vite inietta di default <script type="module"> PRIMA di <link
+ * rel="stylesheet"> nell'HTML di produzione. Lo script e' deferred (esegue
+ * dopo il parsing) quindi non dovrebbe bloccare il CSS in teoria, ma in
+ * pratica su alcuni browser mobile questo ordine causa un flash visibile di
+ * contenuto senza stile (FOUC): l'app monta ed inietta il DOM prima che il
+ * CSSOM sia pronto. Fix: sposta il/i <link rel="stylesheet"> prima del
+ * primo <script type="module"> nell'HTML finale, cosi' il browser scopre e
+ * blocca sul CSS per primo.
+ */
+function cssBeforeModuleScript(): Plugin {
+  return {
+    name: 'css-before-module-script',
+    transformIndexHtml: {
+      order: 'post',
+      handler(html) {
+        const cssLinks: string[] = []
+        const withoutCss = html.replace(/\s*<link rel="stylesheet"[^>]*>/g, (match) => {
+          cssLinks.push(match.trim())
+          return ''
+        })
+        if (!cssLinks.length) return html
+
+        const withCssFirst = withoutCss.replace(
+          /<script type="module"/,
+          `${cssLinks.join('\n    ')}\n    $&`,
+        )
+        return withCssFirst === withoutCss
+          ? withoutCss.replace('</head>', `${cssLinks.join('\n    ')}\n  </head>`)
+          : withCssFirst
+      },
+    },
+  }
+}
+
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
     vue(),
+    cssBeforeModuleScript(),
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'favicon.ico', 'apple-touch-icon-180x180.png'],
