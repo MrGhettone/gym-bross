@@ -64,6 +64,18 @@ const router = createRouter({
       component: RegisterView,
       meta: { guestOnly: true },
     },
+    // Qualunque path non riconosciuto da nessuna rotta sopra (typo, link
+    // vecchio, ecc.) riporta alla home invece di lasciare vuoto <router-view>
+    // (Vue Router non ha un concetto nativo di "pagina 404", semplicemente
+    // non renderizza nulla se nessuna rotta combacia). Il lato server
+    // (Apache FallbackResource su Netsons/nell'emulazione locale) risolve il
+    // caso "refresh/link diretto su un path valido dell'app" servendo comunque
+    // index.html; questa rotta gestisce invece i path che non esistono
+    // proprio nell'app.
+    {
+      path: '/:pathMatch(.*)*',
+      redirect: { path: '/' },
+    },
   ],
 })
 
