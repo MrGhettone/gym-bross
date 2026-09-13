@@ -33,6 +33,14 @@ html,
 body {
   margin: 0;
   padding: 0;
+  // Disabilita pinch-zoom e doppio-tap-per-zoomare (l'app deve comportarsi
+  // come un'app nativa, mai zoomare/rimpicciolire): touch-action e' il modo
+  // standard/affidabile, meta viewport (maximum-scale/user-scalable in
+  // index.html) da solo non basta perche' alcuni browser (es. iOS Safari
+  // fuori da modalita' PWA standalone) lo ignorano parzialmente per
+  // accessibilita'. "pan-x pan-y" senza "pinch-zoom" nell'elenco disabilita
+  // esplicitamente lo zoom pur lasciando lo scroll normale funzionante.
+  touch-action: pan-x pan-y;
 }
 
 body {
