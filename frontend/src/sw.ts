@@ -4,8 +4,23 @@
 // ServiceWorkerGlobalScope confligge con i type "dom" del resto dell'app.
 // @ts-nocheck
 
-import { precacheAndRoute } from 'workbox-precaching'
+import { clientsClaim } from 'workbox-core'
+import { cleanupOutdatedCaches, precacheAndRoute } from 'workbox-precaching'
 
+// Con la strategia injectManifest, a differenza di generateSW, vite-plugin-pwa
+// NON aggiunge automaticamente skipWaiting/clientsClaim al service worker:
+// vanno chiamati esplicitamente qui, altrimenti (bug reale osservato in
+// produzione: la grafica non si aggiornava mai) un nuovo deploy resta
+// "in attesa" a tempo indeterminato finche' l'utente non chiude *tutte* le
+// schede dell'app, perche' e' cosi' che si comporta di default un service
+// worker secondo spec. skipWaiting() attiva subito la nuova versione,
+// clientsClaim() la fa prendere controllo delle schede gia' aperte senza
+// bisogno di un refresh manuale — coerente con registerType: 'autoUpdate'
+// in vite.config.ts (aggiornamento silenzioso, nessun prompt all'utente).
+self.skipWaiting()
+clientsClaim()
+
+cleanupOutdatedCaches()
 precacheAndRoute(self.__WB_MANIFEST)
 
 self.addEventListener('push', (event) => {
