@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
+    "build:netsons-emulation": "vue-tsc -b && vite build --mode netsons-emulation",
     "preview": "vite preview"
   },
   "dependencies": {
