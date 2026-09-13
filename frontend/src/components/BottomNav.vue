@@ -1,9 +1,35 @@
 <script lang="ts">
-export default {}
+export default {
+  data() {
+    return {
+      ready: false,
+    }
+  },
+  mounted() {
+    /**
+     * Su iOS, appena la PWA viene lanciata da home screen, WebKit a volte
+     * riporta per un istante un'area visibile che non include ancora la
+     * safe-area in basso (l'home indicator): env(safe-area-inset-bottom)
+     * risulta temporaneamente troppo piccolo, la barra (ancorata a
+     * bottom: 0) si posiziona piu' in alto del dovuto, poi "salta" verso il
+     * basso non appena il layout viene ricalcolato con i valori corretti.
+     * Non e' evitabile lato CSS (e' l'engine che ricalcola la viewport, non
+     * un problema del nostro layout) ma si puo' mascherare: si tiene la
+     * barra invisibile finche' non arriva quel primo assestamento (o
+     * comunque non oltre un breve timeout, per i casi/browser dove il
+     * problema non si presenta affatto e non scatterebbe nessun resize).
+     */
+    const reveal = () => {
+      this.ready = true
+    }
+    window.visualViewport?.addEventListener('resize', reveal, { once: true })
+    window.setTimeout(reveal, 150)
+  },
+}
 </script>
 
 <template>
-  <nav class="bottom-nav">
+  <nav class="bottom-nav" :class="{ 'bottom-nav--ready': ready }">
     <router-link
       :to="{ name: 'feed' }"
       class="bottom-nav__item"
@@ -71,6 +97,11 @@ export default {}
   background: var(--color-bg);
   border-top: 1px solid var(--color-border);
   padding: 0.375rem 0 calc(0.375rem + env(safe-area-inset-bottom));
+  visibility: hidden;
+
+  &--ready {
+    visibility: visible;
+  }
 }
 
 .bottom-nav__item {
